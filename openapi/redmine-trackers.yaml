@@ -1,0 +1,471 @@
+openapi: 3.0.3
+info:
+  title: Redmine API - Trackers & Enumerations
+  description: 'Part of the modularized Redmine OpenAPI specification. Covers: Enumerations, Issue Categories,
+    Issue Statuses, Roles, Trackers. Depends on ./redmine-core.yaml for shared parameters, security schemes,
+    and common schemas.'
+  contact:
+    name: d-yoshi/redmine-openapi
+    url: https://github.com/d-yoshi/redmine-openapi
+  license:
+    name: MIT
+    url: https://github.com/d-yoshi/redmine-openapi/blob/main/LICENSE
+  version: 0.16.0
+servers:
+- url: /
+security:
+- BasicAuth: []
+- ApiKeyAuth: []
+- ApiKeyInQueryAuth: []
+tags:
+- name: Enumerations
+  description: 'Status: Alpha, Availablity: 2.2'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Enumerations
+- name: Issue Categories
+  description: 'Status: Alpha, Availablity: 1.3'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories
+- name: Issue Statuses
+  description: 'Status: Alpha, Availablity: 1.3'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueStatuses
+- name: Roles
+  description: 'Status: Alpha, Availablity: 1.4'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Roles
+- name: Trackers
+  description: 'Status: Alpha, Availablity: 1.3'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Trackers
+paths:
+  /enumerations/document_categories.json:
+    get:
+      tags:
+      - Enumerations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Enumerations#GET-3
+      summary: List document categories
+      operationId: getDocumentCategories
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - document_categories
+                properties:
+                  document_categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/document_category'
+  /enumerations/issue_priorities.json:
+    get:
+      tags:
+      - Enumerations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Enumerations#GET
+      summary: List issue priorities
+      operationId: getIssuePriorities
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - issue_priorities
+                properties:
+                  issue_priorities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/issue_priority'
+  /enumerations/time_entry_activities.json:
+    get:
+      tags:
+      - Enumerations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Enumerations#GET-2
+      summary: List time entry activities
+      operationId: getTimeEntryActivities
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - time_entry_activities
+                properties:
+                  time_entry_activities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/time_entry_activity'
+  /issue_categories/{issue_category_id}.json:
+    get:
+      tags:
+      - Issue Categories
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories#GET-2
+      summary: Show issue category
+      operationId: getIssueCategory
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_category_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - issue_category
+                properties:
+                  issue_category:
+                    $ref: '#/components/schemas/issue_category'
+    put:
+      tags:
+      - Issue Categories
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories#PUT
+      summary: Update issue category
+      operationId: updateIssueCategory
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_category_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                issue_category:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    assigned_to_id:
+                      type: integer
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+    delete:
+      tags:
+      - Issue Categories
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories#DELETE
+      summary: Delete issue category
+      operationId: deleteIssueCategory
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_category_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - name: reassign_to_id
+        in: query
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: ''
+  /issue_statuses.json:
+    get:
+      tags:
+      - Issue Statuses
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueStatuses#GET
+      summary: List issue statuses
+      operationId: getIssueStatuses
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - issue_statuses
+                properties:
+                  issue_statuses:
+                    type: array
+                    items:
+                      $ref: ./redmine-core.yaml#/components/schemas/issue_status
+  /projects/{project_id}/issue_categories.json:
+    get:
+      tags:
+      - Issue Categories
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories#GET
+      summary: List issue categories
+      operationId: getIssueCategories
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/nometa
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_nometa
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - issue_categories
+                properties:
+                  issue_categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/issue_category'
+                  total_count:
+                    type: integer
+    post:
+      tags:
+      - Issue Categories
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories#POST
+      summary: Create issue category
+      operationId: createIssueCategory
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - issue_category
+              properties:
+                issue_category:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                    assigned_to_id:
+                      type: integer
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - issue_category
+                properties:
+                  issue_category:
+                    $ref: '#/components/schemas/issue_category'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+  /roles.json:
+    get:
+      tags:
+      - Roles
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Roles#GET
+      summary: List roles
+      operationId: getRoles
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - roles
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: ./redmine-core.yaml#/components/schemas/id_name
+  /roles/{role_id}.json:
+    get:
+      tags:
+      - Roles
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Roles#GET-2
+      summary: Show role
+      operationId: getRole
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/role_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - role
+                properties:
+                  role:
+                    $ref: ./redmine-core.yaml#/components/schemas/role
+  /trackers.json:
+    get:
+      tags:
+      - Trackers
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Trackers#GET
+      summary: List trackers
+      operationId: getTrackers
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - trackers
+                properties:
+                  trackers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/tracker'
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Redmine-API-Key
+    ApiKeyInQueryAuth:
+      type: apiKey
+      in: query
+      name: key
+  schemas:
+    issue_priority:
+      type: object
+      required:
+      - id
+      - name
+      - is_default
+      - active
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_default:
+          type: boolean
+        active:
+          type: boolean
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+    time_entry_activity:
+      type: object
+      required:
+      - id
+      - name
+      - is_default
+      - active
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_default:
+          type: boolean
+        active:
+          type: boolean
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+    document_category:
+      type: object
+      required:
+      - id
+      - name
+      - is_default
+      - active
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_default:
+          type: boolean
+        active:
+          type: boolean
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+    tracker:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        default_status:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        description:
+          type: string
+          nullable: true
+        enabled_standard_fields:
+          type: array
+          items:
+            type: string
+    issue_category:
+      type: object
+      required:
+      - id
+      - project
+      - name
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        name:
+          type: string
+        assigned_to:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name

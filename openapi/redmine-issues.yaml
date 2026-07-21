@@ -1,0 +1,1021 @@
+openapi: 3.0.3
+info:
+  title: Redmine API - Issues
+  description: 'Part of the modularized Redmine OpenAPI specification. Covers: Issue Relations, Issues,
+    Journals. Depends on ./redmine-core.yaml for shared parameters, security schemes, and common schemas.'
+  contact:
+    name: d-yoshi/redmine-openapi
+    url: https://github.com/d-yoshi/redmine-openapi
+  license:
+    name: MIT
+    url: https://github.com/d-yoshi/redmine-openapi/blob/main/LICENSE
+  version: 0.16.0
+servers:
+- url: /
+security:
+- BasicAuth: []
+- ApiKeyAuth: []
+- ApiKeyInQueryAuth: []
+tags:
+- name: Issue Relations
+  description: 'Status: Alpha, Availablity: 1.3'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueRelations
+- name: Issues
+  description: 'Status: Stable, Availablity: 1.0'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues
+- name: Journals
+  description: 'Status: Alpha, Availablity: 5.0'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Journals?parent=Rest_api
+paths:
+  /issues.json:
+    get:
+      tags:
+      - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Listing-issues
+      summary: List issues
+      operationId: getIssues
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/offset
+      - $ref: ./redmine-core.yaml#/components/parameters/limit
+      - $ref: ./redmine-core.yaml#/components/parameters/nometa
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_nometa
+      - name: sort
+        in: query
+        schema:
+          type: string
+          example: id:desc
+      - name: include
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - attachments
+            - relations
+        explode: false
+      - name: issue_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: project_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: subproject_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: tracker_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: status_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: assigned_to_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: parent_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: cf_x
+        in: query
+        schema:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            cf_0: string
+      - name: author_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: member_of_group
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: assigned_to_role
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: fixed_version_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: fixed_version.due_date
+        in: query
+        schema:
+          type: string
+      - name: fixed_version.status
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: category_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: subject
+        in: query
+        schema:
+          type: string
+      - name: description
+        in: query
+        schema:
+          type: string
+      - name: notes
+        in: query
+        schema:
+          type: string
+      - name: created_on
+        in: query
+        schema:
+          type: string
+      - name: updated_on
+        in: query
+        schema:
+          type: string
+      - name: closed_on
+        in: query
+        schema:
+          type: string
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: due_date
+        in: query
+        schema:
+          type: string
+      - name: estimated_hours
+        in: query
+        schema:
+          type: string
+      - name: spent_time
+        in: query
+        schema:
+          type: string
+      - name: done_ratio
+        in: query
+        schema:
+          type: string
+      - name: is_private
+        in: query
+        schema:
+          type: string
+      - name: attachment
+        in: query
+        schema:
+          type: string
+      - name: attachment_description
+        in: query
+        schema:
+          type: string
+      - name: watcher_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: updated_by
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: last_updated_by
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: project.status
+        in: query
+        schema:
+          type: integer
+      - name: relation_type
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: child_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: query_id
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - issues
+                properties:
+                  issues:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/issue.simple'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+      - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Creating-an-issue
+      summary: Create issue
+      operationId: createIssue
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - issue
+              properties:
+                issue:
+                  type: object
+                  required:
+                  - project_id
+                  - subject
+                  properties:
+                    project_id:
+                      type: integer
+                    tracker_id:
+                      type: integer
+                    status_id:
+                      type: integer
+                    priority_id:
+                      type: integer
+                    subject:
+                      type: string
+                    description:
+                      type: string
+                      nullable: true
+                    start_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    due_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    done_ratio:
+                      type: integer
+                      minimum: 0
+                      maximum: 100
+                      multipleOf: 10
+                    category_id:
+                      type: integer
+                      nullable: true
+                    fixed_version_id:
+                      type: integer
+                      nullable: true
+                    assigned_to_id:
+                      type: integer
+                      nullable: true
+                    parent_issue_id:
+                      type: integer
+                      nullable: true
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+                    watcher_user_ids:
+                      type: array
+                      items:
+                        type: integer
+                    is_private:
+                      type: boolean
+                    estimated_hours:
+                      type: number
+                      nullable: true
+                    uploads:
+                      $ref: '#/components/schemas/uploads'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - issue
+                properties:
+                  issue:
+                    $ref: '#/components/schemas/issue.simple'
+  /issues/{issue_id}.json:
+    get:
+      tags:
+      - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Showing-an-issue
+      summary: Show issue
+      operationId: getIssue
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - name: include
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - children
+            - attachments
+            - relations
+            - changesets
+            - journals
+            - watchers
+            - allowed_statuses
+        explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - issue
+                properties:
+                  issue:
+                    $ref: '#/components/schemas/issue'
+    put:
+      tags:
+      - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Updating-an-issue
+      summary: Update issue
+      operationId: updateIssue
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                issue:
+                  type: object
+                  properties:
+                    project_id:
+                      type: integer
+                    tracker_id:
+                      type: integer
+                    status_id:
+                      type: integer
+                    priority_id:
+                      type: integer
+                    subject:
+                      type: string
+                    description:
+                      type: string
+                      nullable: true
+                    start_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    due_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    done_ratio:
+                      type: integer
+                      minimum: 0
+                      maximum: 100
+                      multipleOf: 10
+                    category_id:
+                      type: integer
+                      nullable: true
+                    fixed_version_id:
+                      type: integer
+                      nullable: true
+                    assigned_to_id:
+                      type: integer
+                      nullable: true
+                    parent_issue_id:
+                      type: integer
+                      nullable: true
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+                    watcher_user_ids:
+                      type: array
+                      items:
+                        type: integer
+                    is_private:
+                      type: boolean
+                    estimated_hours:
+                      type: number
+                      nullable: true
+                    notes:
+                      type: string
+                    private_notes:
+                      type: string
+                    uploads:
+                      $ref: '#/components/schemas/uploads'
+      responses:
+        '204':
+          description: ''
+    delete:
+      tags:
+      - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Deleting-an-issue
+      summary: Delete issue
+      operationId: deleteIssue
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /issues/{issue_id}/relations.json:
+    get:
+      tags:
+      - Issue Relations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueRelations#GET
+      summary: List issue relations
+      operationId: getIssueRelations
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - relations
+                properties:
+                  relations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/issue_relation'
+    post:
+      tags:
+      - Issue Relations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueRelations#POST
+      summary: Create issue relation
+      operationId: createIssueRelation
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - relation
+              properties:
+                relation:
+                  type: object
+                  required:
+                  - issue_to_id
+                  - relation_type
+                  properties:
+                    issue_to_id:
+                      type: integer
+                    relation_type:
+                      type: string
+                      enum:
+                      - relates
+                      - duplicates
+                      - duplicated
+                      - blocks
+                      - blocked
+                      - precedes
+                      - follows
+                      - copied_to
+                      - copied_from
+                    delay:
+                      type: integer
+                      nullable: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - relation
+                properties:
+                  relation:
+                    $ref: '#/components/schemas/issue_relation'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+  /issues/{issue_id}/watchers.json:
+    post:
+      tags:
+      - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Adding-a-watcher
+      summary: Add watcher
+      operationId: addWatcher
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - user_id
+              properties:
+                user_id:
+                  type: integer
+      responses:
+        '204':
+          description: ''
+  /issues/{issue_id}/watchers/{user_id}.json:
+    delete:
+      tags:
+      - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Removing-a-watcher
+      summary: Remove watcher
+      operationId: removeWatcher
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_id
+      - $ref: ./redmine-core.yaml#/components/parameters/user_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /journals/{journal_id}.json:
+    put:
+      tags:
+      - Journals
+      summary: Update journal
+      operationId: updateJournal
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/journal_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                journal:
+                  type: object
+                  properties:
+                    notes:
+                      type: string
+                      nullable: true
+                    private_notes:
+                      type: boolean
+      responses:
+        '204':
+          description: ''
+  /relations/{issue_relation_id}.json:
+    get:
+      tags:
+      - Issue Relations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueRelations#GET-2
+      summary: Show issue relation
+      operationId: getIssueRelation
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_relation_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - relation
+                properties:
+                  relation:
+                    $ref: '#/components/schemas/issue_relation'
+    delete:
+      tags:
+      - Issue Relations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueRelations#DELETE
+      summary: Delete issue relation
+      operationId: deleteIssueRelation
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_relation_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Redmine-API-Key
+    ApiKeyInQueryAuth:
+      type: apiKey
+      in: query
+      name: key
+  schemas:
+    issue.simple:
+      type: object
+      required:
+      - id
+      - project
+      - tracker
+      - status
+      - priority
+      - author
+      - subject
+      - description
+      - start_date
+      - due_date
+      - done_ratio
+      - is_private
+      - estimated_hours
+      - total_estimated_hours
+      - created_on
+      - updated_on
+      - closed_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        tracker:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        status:
+          $ref: ./redmine-core.yaml#/components/schemas/issue_status
+        priority:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        author:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        assigned_to:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        category:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        subject:
+          type: string
+        description:
+          type: string
+          nullable: true
+        start_date:
+          type: string
+          nullable: true
+        due_date:
+          type: string
+          nullable: true
+        done_ratio:
+          type: integer
+        is_private:
+          type: boolean
+        estimated_hours:
+          type: number
+          nullable: true
+        total_estimated_hours:
+          type: number
+          nullable: true
+        spent_hours:
+          type: number
+        total_spent_hours:
+          type: number
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        closed_on:
+          type: string
+          format: date-time
+          nullable: true
+    issue:
+      type: object
+      required:
+      - id
+      - project
+      - tracker
+      - status
+      - priority
+      - author
+      - subject
+      - description
+      - start_date
+      - due_date
+      - done_ratio
+      - is_private
+      - estimated_hours
+      - total_estimated_hours
+      - created_on
+      - updated_on
+      - closed_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        tracker:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        status:
+          $ref: ./redmine-core.yaml#/components/schemas/issue_status
+        priority:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        author:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        assigned_to:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        category:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        subject:
+          type: string
+        description:
+          type: string
+          nullable: true
+        start_date:
+          type: string
+          nullable: true
+        due_date:
+          type: string
+          nullable: true
+        done_ratio:
+          type: integer
+        is_private:
+          type: boolean
+        estimated_hours:
+          type: number
+          nullable: true
+        total_estimated_hours:
+          type: number
+          nullable: true
+        spent_hours:
+          type: number
+        total_spent_hours:
+          type: number
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        closed_on:
+          type: string
+          format: date-time
+          nullable: true
+        changesets:
+          type: array
+          items:
+            type: string
+        children:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - tracker
+            - subject
+            properties:
+              id:
+                type: integer
+              tracker:
+                $ref: ./redmine-core.yaml#/components/schemas/id_name
+              subject:
+                type: string
+        attachments:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - filename
+            - filesize
+            - content_type
+            - description
+            - content_url
+            - author
+            - created_on
+            properties:
+              id:
+                type: integer
+              filename:
+                type: string
+              filesize:
+                type: integer
+              content_type:
+                type: string
+              description:
+                type: string
+              content_url:
+                type: string
+              author:
+                $ref: ./redmine-core.yaml#/components/schemas/id_name
+              created_on:
+                type: string
+                format: data-time
+              thumbnail_url:
+                type: string
+        relations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              issue_id:
+                type: integer
+              issue_to_id:
+                type: integer
+              relation_type:
+                type: string
+              delay:
+                type: integer
+                nullable: true
+        journals:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - user
+            - notes
+            - created_on
+            - private_notes
+            - details
+            properties:
+              id:
+                type: integer
+              user:
+                $ref: ./redmine-core.yaml#/components/schemas/id_name
+              notes:
+                type: string
+              created_on:
+                type: string
+                format: date-time
+              private_notes:
+                type: boolean
+              details:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - property
+                  - name
+                  - old_value
+                  - new_value
+                  properties:
+                    property:
+                      type: string
+                    name:
+                      type: string
+                    old_value:
+                      type: string
+                      nullable: true
+                    new_value:
+                      type: string
+                      nullable: true
+        watchers:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        allowed_statuses:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/issue_status
+    uploads:
+      type: array
+      items:
+        properties:
+          token:
+            type: string
+          filename:
+            type: string
+          description:
+            type: string
+          content_type:
+            type: string
+    issue_relation:
+      type: object
+      required:
+      - id
+      - issue_id
+      - issue_to_id
+      - relation_type
+      - delay
+      properties:
+        id:
+          type: integer
+        issue_id:
+          type: integer
+        issue_to_id:
+          type: integer
+        relation_type:
+          type: string
+        delay:
+          type: integer
+          nullable: true

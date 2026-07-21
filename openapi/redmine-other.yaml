@@ -1,0 +1,467 @@
+openapi: 3.0.3
+info:
+  title: Redmine API - Other (News, Search, Repositories)
+  description: 'Part of the modularized Redmine OpenAPI specification. Covers: News, Repositories, Search.
+    Depends on ./redmine-core.yaml for shared parameters, security schemes, and common schemas.'
+  contact:
+    name: d-yoshi/redmine-openapi
+    url: https://github.com/d-yoshi/redmine-openapi
+  license:
+    name: MIT
+    url: https://github.com/d-yoshi/redmine-openapi/blob/main/LICENSE
+  version: 0.16.0
+servers:
+- url: /
+security:
+- BasicAuth: []
+- ApiKeyAuth: []
+- ApiKeyInQueryAuth: []
+tags:
+- name: News
+  description: 'Status: Prototype, Availablity: 1.1'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_News
+- name: Repositories
+  description: Undocumented
+- name: Search
+  description: 'Status: Alpha, Availablity: 3.3'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Search
+paths:
+  /news.json:
+    get:
+      tags:
+      - News
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_News#GET
+      summary: List news
+      operationId: getNewsList
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/offset
+      - $ref: ./redmine-core.yaml#/components/parameters/limit
+      - $ref: ./redmine-core.yaml#/components/parameters/nometa
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_nometa
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - news
+                properties:
+                  news:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/news'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+  /news/{news_id}.json:
+    get:
+      tags:
+      - News
+      summary: Show news
+      operationId: getNews
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/news_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - name: include
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - attachments
+            - comments
+        explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - news
+                properties:
+                  news:
+                    $ref: '#/components/schemas/news'
+    put:
+      tags:
+      - News
+      summary: Update news
+      operationId: updateNews
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/news_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                news:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                    summary:
+                      type: string
+                    description:
+                      type: string
+                    uploads:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                          filename:
+                            type: string
+                          description:
+                            type: string
+                          content_type:
+                            type: string
+      responses:
+        '204':
+          description: ''
+    delete:
+      tags:
+      - News
+      summary: Delete news
+      operationId: deleteNews
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/news_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/news.json:
+    get:
+      tags:
+      - News
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_News#GET-2
+      summary: List news by project
+      operationId: getNewsListByProject
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/offset
+      - $ref: ./redmine-core.yaml#/components/parameters/limit
+      - $ref: ./redmine-core.yaml#/components/parameters/nometa
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_nometa
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - news
+                properties:
+                  news:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/news'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+      - News
+      summary: Create news
+      operationId: createNews
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - news
+              properties:
+                news:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                    summary:
+                      type: string
+                    description:
+                      type: string
+                    uploads:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                          filename:
+                            type: string
+                          description:
+                            type: string
+                          content_type:
+                            type: string
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/repository/{repository_id}/revisions/{revision}/issues.json:
+    post:
+      tags:
+      - Repositories
+      summary: Add related issue
+      operationId: addRelatedIssue
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/repository_id
+      - $ref: ./redmine-core.yaml#/components/parameters/revision
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - issue_id
+              properties:
+                issue_id:
+                  type: integer
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/repository/{repository_id}/revisions/{revision}/issues/{issue_id}.json:
+    delete:
+      tags:
+      - Repositories
+      summary: Remove related issue
+      operationId: removeRelatedIssue
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/repository_id
+      - $ref: ./redmine-core.yaml#/components/parameters/revision
+      - $ref: ./redmine-core.yaml#/components/parameters/issue_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /search.json:
+    get:
+      tags:
+      - Search
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Search#GET
+      summary: Search
+      operationId: search
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/limit
+      - $ref: ./redmine-core.yaml#/components/parameters/offset
+      - $ref: ./redmine-core.yaml#/components/parameters/nometa
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_nometa
+      - name: q
+        in: query
+        schema:
+          type: string
+        required: true
+      - name: scope
+        in: query
+        schema:
+          type: string
+          enum:
+          - all
+          - my_project
+          - subprojects
+      - name: all_words
+        in: query
+        schema:
+          type: integer
+          enum:
+          - 1
+      - name: titles_only
+        in: query
+        schema:
+          type: integer
+          enum:
+          - 1
+      - name: issues
+        in: query
+        schema:
+          type: integer
+          enum:
+          - 1
+      - name: news
+        in: query
+        schema:
+          type: integer
+          enum:
+          - 1
+      - name: wiki_pages
+        in: query
+        schema:
+          type: integer
+          enum:
+          - 1
+      - name: projects
+        in: query
+        schema:
+          type: integer
+          enum:
+          - 1
+      - name: documents
+        in: query
+        schema:
+          type: integer
+          enum:
+          - 1
+      - name: changesets
+        in: query
+        schema:
+          type: integer
+          enum:
+          - 1
+      - name: messages
+        in: query
+        schema:
+          type: integer
+          enum:
+          - 1
+      - name: open_issues
+        in: query
+        schema:
+          type: integer
+          enum:
+          - 1
+      - name: attachments
+        in: query
+        schema:
+          type: string
+          enum:
+          - '0'
+          - '1'
+          - only
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - results
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/search'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Redmine-API-Key
+    ApiKeyInQueryAuth:
+      type: apiKey
+      in: query
+      name: key
+  schemas:
+    search:
+      type: object
+      required:
+      - id
+      - title
+      - type
+      - url
+      - description
+      - datetime
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        type:
+          type: string
+        url:
+          type: string
+        description:
+          type: string
+        datetime:
+          type: string
+          format: date-time
+    news_comment:
+      type: object
+      required:
+      - id
+      - author
+      - content
+      properties:
+        id:
+          type: integer
+        author:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        content:
+          type: string
+    news:
+      type: object
+      required:
+      - id
+      - project
+      - author
+      - title
+      - description
+      - created_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        author:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        title:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+        attachments:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/attachment
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/news_comment'

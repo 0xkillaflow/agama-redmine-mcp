@@ -1,0 +1,19 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Test coverage
+coverage
+
+# Environment / secrets
+.env
+.env.local
+test/integration/redmine.env
+
+# Logs & OS cruft
+*.log
+.DS_Store
+
+.local

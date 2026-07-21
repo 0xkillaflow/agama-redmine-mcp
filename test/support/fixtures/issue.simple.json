@@ -1,0 +1,23 @@
+{
+  "id": 42,
+  "project": { "id": 1, "name": "Website" },
+  "tracker": { "id": 2, "name": "Bug" },
+  "status": { "id": 1, "name": "New", "is_closed": false },
+  "priority": { "id": 4, "name": "Normal" },
+  "author": { "id": 7, "name": "Jane Dev" },
+  "assigned_to": { "id": 7, "name": "Jane Dev" },
+  "subject": "Login button misaligned",
+  "description": "On mobile the button overflows its container.",
+  "start_date": "2026-07-01",
+  "due_date": null,
+  "done_ratio": 0,
+  "is_private": false,
+  "estimated_hours": null,
+  "total_estimated_hours": null,
+  "spent_hours": 0,
+  "total_spent_hours": 0,
+  "custom_fields": [{ "id": 5, "name": "Severity", "value": "high" }],
+  "created_on": "2026-07-01T10:00:00Z",
+  "updated_on": "2026-07-02T11:00:00Z",
+  "closed_on": null
+}

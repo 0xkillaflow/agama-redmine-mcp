@@ -1,0 +1,23 @@
+{
+  "results": [
+    {
+      "id": 42,
+      "title": "Bug #42: Login button misaligned",
+      "type": "issue",
+      "url": "https://redmine.example.com/issues/42",
+      "description": "On mobile the button overflows its container.",
+      "datetime": "2026-07-02T11:00:00Z"
+    },
+    {
+      "id": 1,
+      "title": "Wiki: Login flow",
+      "type": "wiki-page",
+      "url": "https://redmine.example.com/projects/website/wiki/Login_flow",
+      "description": "How the login flow works.",
+      "datetime": "2026-06-15T09:00:00Z"
+    }
+  ],
+  "total_count": 2,
+  "offset": 0,
+  "limit": 25
+}

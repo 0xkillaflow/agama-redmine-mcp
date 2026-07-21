@@ -1,0 +1,17 @@
+{
+  "id": 7,
+  "login": "jane",
+  "firstname": "Jane",
+  "lastname": "Dev",
+  "mail": "jane@example.com",
+  "admin": false,
+  "created_on": "2025-01-01T00:00:00Z",
+  "last_login_on": "2026-07-15T08:00:00Z",
+  "memberships": [
+    {
+      "project": { "id": 1, "name": "Website" },
+      "roles": [{ "id": 3, "name": "Developer" }]
+    }
+  ],
+  "groups": [{ "id": 11, "name": "Frontend" }]
+}

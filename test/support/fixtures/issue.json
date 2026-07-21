@@ -1,0 +1,42 @@
+{
+  "id": 42,
+  "project": { "id": 1, "name": "Website" },
+  "tracker": { "id": 2, "name": "Bug" },
+  "status": { "id": 2, "name": "In Progress", "is_closed": false },
+  "priority": { "id": 4, "name": "Normal" },
+  "author": { "id": 7, "name": "Jane Dev" },
+  "assigned_to": { "id": 7, "name": "Jane Dev" },
+  "category": { "id": 3, "name": "UI" },
+  "subject": "Login button misaligned",
+  "description": "On mobile the button overflows its container.",
+  "start_date": "2026-07-01",
+  "due_date": null,
+  "done_ratio": 30,
+  "is_private": false,
+  "estimated_hours": 4,
+  "total_estimated_hours": 4,
+  "spent_hours": 1.5,
+  "total_spent_hours": 1.5,
+  "custom_fields": [{ "id": 5, "name": "Severity", "value": "high" }],
+  "created_on": "2026-07-01T10:00:00Z",
+  "updated_on": "2026-07-03T09:30:00Z",
+  "closed_on": null,
+  "journals": [
+    {
+      "id": 100,
+      "user": { "id": 7, "name": "Jane Dev" },
+      "notes": "Started working on the CSS fix.",
+      "created_on": "2026-07-03T09:30:00Z",
+      "private_notes": false,
+      "details": [
+        {
+          "property": "attr",
+          "name": "status_id",
+          "old_value": "1",
+          "new_value": "2"
+        }
+      ]
+    }
+  ],
+  "watchers": [{ "id": 8, "name": "Sam Reviewer" }]
+}

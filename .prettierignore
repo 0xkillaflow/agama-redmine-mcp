@@ -1,0 +1,15 @@
+# Build output & dependencies
+dist
+coverage
+node_modules
+
+# Secrets
+.env
+
+# Package manager artifacts
+package-lock.json
+
+# Pre-existing specs & design docs — not owned by the code-style pipeline.
+docs
+openapi
+mcp-tools-req.md

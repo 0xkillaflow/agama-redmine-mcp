@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: Redmine API - Custom Fields
+  description: 'Part of the modularized Redmine OpenAPI specification. Covers: Custom Fields. Depends
+    on ./redmine-core.yaml for shared parameters, security schemes, and common schemas.'
+  contact:
+    name: d-yoshi/redmine-openapi
+    url: https://github.com/d-yoshi/redmine-openapi
+  license:
+    name: MIT
+    url: https://github.com/d-yoshi/redmine-openapi/blob/main/LICENSE
+  version: 0.16.0
+servers:
+- url: /
+security:
+- BasicAuth: []
+- ApiKeyAuth: []
+- ApiKeyInQueryAuth: []
+tags:
+- name: Custom Fields
+  description: 'Status: Alpha, Availablity: 2.4'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_CustomFields
+paths:
+  /custom_fields.json:
+    get:
+      tags:
+      - Custom Fields
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_CustomFields#GET
+      summary: List custom fields
+      operationId: getCustomFields
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - custom_fields
+                properties:
+                  custom_fields:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/custom_field'
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Redmine-API-Key
+    ApiKeyInQueryAuth:
+      type: apiKey
+      in: query
+      name: key
+  schemas:
+    custom_field:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        customized_type:
+          type: string
+          enum:
+          - issue
+          - time_entry
+          - project
+          - version
+          - document
+          - user
+          - group
+          - time_entry_activity
+          - issue_priority
+          - document_category
+        field_format:
+          type: string
+          enum:
+          - enumeration
+          - string
+          - version
+          - attachment
+          - user
+          - list
+          - link
+          - float
+          - int
+          - date
+          - bool
+          - text
+        regexp:
+          type: string
+        min_length:
+          type: integer
+          nullable: true
+        max_length:
+          type: integer
+          nullable: true
+        is_required:
+          type: boolean
+        is_filter:
+          type: boolean
+        searchable:
+          type: boolean
+        multiple:
+          type: boolean
+        default_value:
+          type: string
+          nullable: true
+        visible:
+          type: boolean
+        trackers:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        roles:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/role
+        possible_values:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              label:
+                type: string

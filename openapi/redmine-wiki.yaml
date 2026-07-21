@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: Redmine API - Wiki Pages
+  description: 'Part of the modularized Redmine OpenAPI specification. Covers: Wiki Pages. Depends on
+    ./redmine-core.yaml for shared parameters, security schemes, and common schemas.'
+  contact:
+    name: d-yoshi/redmine-openapi
+    url: https://github.com/d-yoshi/redmine-openapi
+  license:
+    name: MIT
+    url: https://github.com/d-yoshi/redmine-openapi/blob/main/LICENSE
+  version: 0.16.0
+servers:
+- url: /
+security:
+- BasicAuth: []
+- ApiKeyAuth: []
+- ApiKeyInQueryAuth: []
+tags:
+- name: Wiki Pages
+  description: 'Status: Alpha, Availablity: 2.2'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages
+paths:
+  /projects/{project_id}/wiki/index.json:
+    get:
+      tags:
+      - Wiki Pages
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-the-pages-list-of-a-wiki
+      summary: List wiki pages
+      operationId: getWikiPages
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - wiki_pages
+                properties:
+                  wiki_pages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/wiki_pages'
+  /projects/{project_id}/wiki/{wiki_page_title}.json:
+    get:
+      tags:
+      - Wiki Pages
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-a-wiki-page
+      summary: Show wiki page
+      operationId: getWikiPage
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/wiki_page_title
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - name: include
+        in: query
+        schema:
+          type: string
+          enum:
+          - attachments
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - wiki_page
+                properties:
+                  wiki_page:
+                    $ref: '#/components/schemas/wiki_page'
+    put:
+      tags:
+      - Wiki Pages
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Creating-or-updating-a-wiki-page
+      summary: Create or update wiki page
+      operationId: updateWikiPage
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/wiki_page_title
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                wiki_page:
+                  type: object
+                  required:
+                  - text
+                  properties:
+                    text:
+                      type: string
+                    comments:
+                      type: string
+                    version:
+                      type: integer
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - wiki_page
+                properties:
+                  wiki_page:
+                    $ref: '#/components/schemas/wiki_page'
+        '204':
+          description: ''
+        '409':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+    delete:
+      tags:
+      - Wiki Pages
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Deleting-a-wiki-page
+      summary: Delete wiki page
+      operationId: deleteWikiPage
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/wiki_page_title
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/wiki/{wiki_page_title}/{version_id}.json:
+    get:
+      tags:
+      - Wiki Pages
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-an-old-version-of-a-wiki-page
+      summary: Show wiki page by specific version
+      operationId: getWikiPageByVersion
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/wiki_page_title
+      - $ref: ./redmine-core.yaml#/components/parameters/version_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - name: include
+        in: query
+        schema:
+          type: string
+          enum:
+          - attachments
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - wiki_page
+                properties:
+                  wiki_page:
+                    $ref: '#/components/schemas/wiki_page'
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Redmine-API-Key
+    ApiKeyInQueryAuth:
+      type: apiKey
+      in: query
+      name: key
+  schemas:
+    wiki_page:
+      type: object
+      required:
+      - title
+      - text
+      - version
+      - author
+      - comments
+      - created_on
+      - updated_on
+      properties:
+        title:
+          type: string
+        parent:
+          type: object
+          required:
+          - title
+          properties:
+            title:
+              type: string
+        text:
+          type: string
+        version:
+          type: integer
+        author:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        comments:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        attachments:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/attachment
+    wiki_pages:
+      type: object
+      required:
+      - title
+      - version
+      - created_on
+      - updated_on
+      properties:
+        title:
+          type: integer
+        parent:
+          type: object
+          required:
+          - title
+          properties:
+            title:
+              type: string
+        version:
+          type: integer
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time

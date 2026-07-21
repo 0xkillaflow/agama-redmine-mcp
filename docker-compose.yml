@@ -1,0 +1,39 @@
+# Local Redmine for the opt-in integration tests (docs/tasks — task 30, ADR-0019).
+#
+# Brings up a Redmine on :3000 backed by Postgres. Image tags are pinned for
+# reproducibility. Start it with `scripts/redmine-up.sh`, which also waits for
+# health, loads Redmine's default configuration, enables the REST API, and mints
+# an admin API key.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: redmine
+      POSTGRES_USER: redmine
+      POSTGRES_PASSWORD: redmine
+    volumes:
+      - redmine-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U redmine']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redmine:
+    image: redmine:6-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      REDMINE_DB_POSTGRES: db
+      REDMINE_DB_DATABASE: redmine
+      REDMINE_DB_USERNAME: redmine
+      REDMINE_DB_PASSWORD: redmine
+    ports:
+      - '3000:3000'
+    volumes:
+      - redmine-files:/usr/src/redmine/files
+
+volumes:
+  redmine-db:
+  redmine-files:

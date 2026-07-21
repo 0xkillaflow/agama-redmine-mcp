@@ -1,0 +1,90 @@
+openapi: 3.0.3
+info:
+  title: Redmine API - Queries
+  description: 'Part of the modularized Redmine OpenAPI specification. Covers: Queries. Depends on ./redmine-core.yaml
+    for shared parameters, security schemes, and common schemas.'
+  contact:
+    name: d-yoshi/redmine-openapi
+    url: https://github.com/d-yoshi/redmine-openapi
+  license:
+    name: MIT
+    url: https://github.com/d-yoshi/redmine-openapi/blob/main/LICENSE
+  version: 0.16.0
+servers:
+- url: /
+security:
+- BasicAuth: []
+- ApiKeyAuth: []
+- ApiKeyInQueryAuth: []
+tags:
+- name: Queries
+  description: 'Status: Alpha, Availablity: 1.3'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Queries
+paths:
+  /queries.json:
+    get:
+      tags:
+      - Queries
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Queries#GET
+      summary: List queries
+      operationId: getQueries
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/offset
+      - $ref: ./redmine-core.yaml#/components/parameters/limit
+      - $ref: ./redmine-core.yaml#/components/parameters/nometa
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_nometa
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - queries
+                properties:
+                  queries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/query'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Redmine-API-Key
+    ApiKeyInQueryAuth:
+      type: apiKey
+      in: query
+      name: key
+  schemas:
+    query:
+      type: object
+      required:
+      - id
+      - name
+      - is_public
+      - project_id
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_public:
+          type: boolean
+        project_id:
+          type: integer
+          nullable: true

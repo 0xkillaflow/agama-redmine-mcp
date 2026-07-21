@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+.git
+.github
+test
+docs
+openapi-split
+*.log
+.env
+.env.local
+test/integration/redmine.env

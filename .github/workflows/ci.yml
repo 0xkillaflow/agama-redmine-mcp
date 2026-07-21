@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Manual trigger, primarily to run the opt-in integration job below.
+  workflow_dispatch:
+
+# Cancel superseded runs on the same ref to keep the queue short.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Fast, network-light gate: typecheck, lint, format, catalog drift, tests, build.
+  build:
+    name: build (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Tool catalog is up to date
+        run: npm run gen:tools:check
+
+      - name: Test with coverage
+        run: npm run test -- --coverage
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload coverage report
+        # One leg is enough; avoids duplicate-artifact name clashes.
+        if: matrix.node == 22
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+          if-no-files-found: warn
+
+  # Release-readiness: the packed tarball ships dist + docs and nothing extraneous (task 34).
+  package:
+    name: package (npm pack)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify tarball contents
+        run: |
+          set -euo pipefail
+          tarball="$(npm pack --silent)"
+          echo "Packed: $tarball"
+          files="$(tar -tzf "$tarball" | sed 's#^\./##')"
+          echo "--- tarball contents ---"
+          echo "$files"
+
+          require() {
+            echo "$files" | grep -qxF "package/$1" || { echo "::error::missing $1 in tarball"; exit 1; }
+          }
+          forbid() {
+            if echo "$files" | grep -qE "^package/$1(/|$)"; then
+              echo "::error::unexpected $1 in tarball"; exit 1
+            fi
+          }
+
+          require "dist/index.js"
+          require "README.md"
+          require "LICENSE"
+          require "package.json"
+
+          forbid "src"
+          forbid "test"
+          forbid "docs"
+          forbid "openapi"
+
+          echo "Tarball contents OK."
+
+  # Opt-in end-to-end suite against a Dockerized Redmine. Manual only — never gates PRs.
+  integration:
+    name: integration (Dockerized Redmine)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Start & seed Redmine
+        run: bash scripts/redmine-up.sh
+
+      - name: Run integration tests
+        run: |
+          set -a && source test/integration/redmine.env && set +a
+          RUN_INTEGRATION=1 npm test

@@ -1,0 +1,823 @@
+openapi: 3.0.3
+info:
+  title: Redmine API - Projects
+  description: 'Part of the modularized Redmine OpenAPI specification. Covers: Projects, Versions. Depends
+    on ./redmine-core.yaml for shared parameters, security schemes, and common schemas.'
+  contact:
+    name: d-yoshi/redmine-openapi
+    url: https://github.com/d-yoshi/redmine-openapi
+  license:
+    name: MIT
+    url: https://github.com/d-yoshi/redmine-openapi/blob/main/LICENSE
+  version: 0.16.0
+servers:
+- url: /
+security:
+- BasicAuth: []
+- ApiKeyAuth: []
+- ApiKeyInQueryAuth: []
+tags:
+- name: Projects
+  description: 'Status: Stable, Availablity: 1.0'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects
+- name: Versions
+  description: 'Status: Alpha, Availablity: 1.3'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions
+paths:
+  /projects.json:
+    get:
+      tags:
+      - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Listing-projects
+      summary: List projects
+      operationId: getProjects
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/offset
+      - $ref: ./redmine-core.yaml#/components/parameters/limit
+      - $ref: ./redmine-core.yaml#/components/parameters/nometa
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_nometa
+      - name: include
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - trackers
+            - issue_categories
+            - time_entry_activities
+            - enabled_modules
+            - issue_custom_fields
+        explode: false
+      - name: status
+        in: query
+        schema:
+          type: array
+          items:
+            type: integer
+        explode: false
+      - name: id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: name
+        in: query
+        schema:
+          type: string
+      - name: description
+        in: query
+        schema:
+          type: string
+      - name: parent_id
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        explode: false
+      - name: is_public
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - '0'
+            - '1'
+        explode: false
+      - name: created_on
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - projects
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/project.simple'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+      - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Creating-a-project
+      summary: Crete project
+      operationId: createProject
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - project
+              properties:
+                project:
+                  type: object
+                  required:
+                  - name
+                  - identifier
+                  properties:
+                    name:
+                      type: string
+                    identifier:
+                      type: string
+                    description:
+                      type: string
+                      nullable: true
+                    homepage:
+                      type: string
+                      nullable: true
+                    is_public:
+                      type: boolean
+                    parent_id:
+                      type: integer
+                      nullable: true
+                    inherit_members:
+                      type: boolean
+                    default_assigned_to_id:
+                      type: integer
+                      nullable: true
+                    default_version_id:
+                      type: integer
+                      nullable: true
+                    tracker_ids:
+                      type: array
+                      items:
+                        type: integer
+                    enabled_module_names:
+                      type: array
+                      items:
+                        type: string
+                    issue_custom_field_ids:
+                      type: array
+                      items:
+                        type: integer
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - project
+                properties:
+                  project:
+                    $ref: '#/components/schemas/project'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+  /projects/{project_id}.json:
+    get:
+      tags:
+      - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Showing-a-project
+      summary: Show project
+      operationId: getProject
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - name: include
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - trackers
+            - issue_categories
+            - time_entry_activities
+            - enabled_modules
+            - issue_custom_fields
+        explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - project
+                properties:
+                  project:
+                    $ref: '#/components/schemas/project'
+    put:
+      tags:
+      - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Updating-a-project
+      summary: Update project
+      operationId: updateProject
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+                      nullable: true
+                    homepage:
+                      type: string
+                      nullable: true
+                    is_public:
+                      type: boolean
+                    parent_id:
+                      type: integer
+                      nullable: true
+                    inherit_members:
+                      type: boolean
+                    default_assigned_to_id:
+                      type: integer
+                      nullable: true
+                    default_version_id:
+                      type: integer
+                      nullable: true
+                    tracker_ids:
+                      type: array
+                      items:
+                        type: integer
+                    enabled_module_names:
+                      type: array
+                      items:
+                        type: string
+                    issue_custom_field_ids:
+                      type: array
+                      items:
+                        type: integer
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+      responses:
+        '204':
+          description: ''
+    delete:
+      tags:
+      - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Deleting-a-project
+      summary: Delete project
+      operationId: deleteProject
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/archive.json:
+    put:
+      tags:
+      - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Archiving-a-project
+      summary: Archive project
+      operationId: archiveProject
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/close.json:
+    put:
+      tags:
+      - Projects
+      summary: Close project
+      operationId: closeProject
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/reopen.json:
+    put:
+      tags:
+      - Projects
+      summary: Reopen project
+      operationId: reopenProject
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/unarchive.json:
+    put:
+      tags:
+      - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Unarchiving-a-project
+      summary: Unarchive project
+      operationId: unarchiveProject
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/versions.json:
+    get:
+      tags:
+      - Versions
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions#GET
+      summary: List versions by project
+      operationId: getVersionsByProject
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/nometa
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_nometa
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - versions
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/version.simple'
+                  total_count:
+                    type: integer
+    post:
+      tags:
+      - Versions
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions#POST
+      summary: Create version
+      operationId: createVersion
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - version
+              properties:
+                version:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                      - open
+                      - locked
+                      - closed
+                    sharing:
+                      type: string
+                      enum:
+                      - none
+                      - descendants
+                      - hierarchy
+                      - tree
+                      - system
+                    due_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    description:
+                      type: string
+                    wiki_page_title:
+                      type: string
+                      nullable: true
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - version
+                properties:
+                  version:
+                    $ref: '#/components/schemas/version'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+  /versions/{version_id}.json:
+    get:
+      tags:
+      - Versions
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions#GET-2
+      summary: Show version
+      operationId: getVersions
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/version_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - version
+                properties:
+                  version:
+                    $ref: '#/components/schemas/version'
+    put:
+      tags:
+      - Versions
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions#PUT
+      summary: Update version
+      operationId: updateVersion
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/version_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                      - open
+                      - locked
+                      - closed
+                    sharing:
+                      type: string
+                      enum:
+                      - none
+                      - descendants
+                      - hierarchy
+                      - tree
+                      - system
+                    due_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    description:
+                      type: string
+                    wiki_page_title:
+                      type: string
+                      nullable: true
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+    delete:
+      tags:
+      - Versions
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions#DELETE
+      summary: Delete version
+      operationId: deleteVersion
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/version_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Redmine-API-Key
+    ApiKeyInQueryAuth:
+      type: apiKey
+      in: query
+      name: key
+  schemas:
+    project.simple:
+      type: object
+      required:
+      - id
+      - name
+      - identifier
+      - description
+      - status
+      - is_public
+      - inherit_members
+      - created_on
+      - updated_on
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        identifier:
+          type: string
+        description:
+          type: string
+          nullable: true
+        parent:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        status:
+          type: integer
+        is_public:
+          type: boolean
+        inherit_members:
+          type: boolean
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+        trackers:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        issue_categories:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        time_entry_activities:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        enabled_modules:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        issue_custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+    version:
+      type: object
+      required:
+      - id
+      - project
+      - name
+      - status
+      - due_date
+      - sharing
+      - description
+      - wiki_page_title
+      - created_on
+      - updated_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - open
+          - locked
+          - closed
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        sharing:
+          type: string
+          enum:
+          - none
+          - descendants
+          - hierarchy
+          - tree
+          - system
+        wiki_page_title:
+          type: string
+          nullable: true
+        estimated_hours:
+          type: number
+        spent_hours:
+          type: number
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+    project:
+      type: object
+      required:
+      - id
+      - name
+      - identifier
+      - description
+      - status
+      - is_public
+      - inherit_members
+      - created_on
+      - updated_on
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        identifier:
+          type: string
+        description:
+          type: string
+          nullable: true
+        homepage:
+          type: string
+          nullable: true
+        parent:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        status:
+          type: integer
+        is_public:
+          type: boolean
+        inherit_members:
+          type: boolean
+        default_version:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        default_assignee:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+        trackers:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        issue_categories:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        time_entry_activities:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        enabled_modules:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        issue_custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+    version.simple:
+      type: object
+      required:
+      - id
+      - project
+      - name
+      - status
+      - due_date
+      - sharing
+      - description
+      - wiki_page_title
+      - created_on
+      - updated_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - open
+          - locked
+          - closed
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        sharing:
+          type: string
+          enum:
+          - none
+          - descendants
+          - hierarchy
+          - tree
+          - system
+        wiki_page_title:
+          type: string
+          nullable: true
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time

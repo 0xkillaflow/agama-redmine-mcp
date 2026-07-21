@@ -1,0 +1,895 @@
+openapi: 3.0.3
+info:
+  title: Redmine API - Users
+  description: 'Part of the modularized Redmine OpenAPI specification. Covers: Groups, My Account, Users.
+    Depends on ./redmine-core.yaml for shared parameters, security schemes, and common schemas.'
+  contact:
+    name: d-yoshi/redmine-openapi
+    url: https://github.com/d-yoshi/redmine-openapi
+  license:
+    name: MIT
+    url: https://github.com/d-yoshi/redmine-openapi/blob/main/LICENSE
+  version: 0.16.0
+servers:
+- url: /
+security:
+- BasicAuth: []
+- ApiKeyAuth: []
+- ApiKeyInQueryAuth: []
+tags:
+- name: Groups
+  description: 'Status: Alpha, Availablity: 2.1'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups
+- name: My Account
+  description: 'Status: Alpha, Availablity: 4.1'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_MyAccount
+- name: Users
+  description: 'Status: Stable, Availablity: 1.1'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Users
+paths:
+  /groups.json:
+    get:
+      tags:
+      - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#GET
+      summary: List groups
+      operationId: getGroups
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - groups
+                properties:
+                  groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/group.simple'
+    post:
+      tags:
+      - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#POST
+      summary: Create group
+      operationId: createGroup
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - group
+              properties:
+                group:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    user_ids:
+                      type: array
+                      items:
+                        type: integer
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  group:
+                    $ref: '#/components/schemas/group.simple'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+  /groups/{group_id}.json:
+    get:
+      tags:
+      - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#GET-2
+      summary: Show group
+      operationId: getGroup
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/group_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - name: include
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - users
+            - memberships
+        explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - group
+                properties:
+                  group:
+                    $ref: '#/components/schemas/group'
+    put:
+      tags:
+      - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#PUT
+      summary: Update group
+      operationId: updateGroup
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/group_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    user_ids:
+                      type: array
+                      items:
+                        type: integer
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+      responses:
+        '204':
+          description: ''
+    delete:
+      tags:
+      - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#DELETE
+      summary: Delete group
+      operationId: deleteGroup
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/group_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /groups/{group_id}/users.json:
+    post:
+      tags:
+      - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#POST-2
+      summary: Add user to group
+      operationId: addUserToGroup
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/group_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - user_id
+              properties:
+                user_id:
+                  type: integer
+      responses:
+        '204':
+          description: ''
+  /groups/{group_id}/users/{user_id}.json:
+    delete:
+      tags:
+      - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#DELETE-2
+      summary: Remove user from group
+      operationId: removeUserFromGroup
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/group_id
+      - $ref: ./redmine-core.yaml#/components/parameters/user_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /my/account.json:
+    get:
+      tags:
+      - My Account
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_MyAccount#GET
+      summary: Show my account
+      operationId: getMyAccount
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/my_account'
+    put:
+      tags:
+      - My Account
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_MyAccount#PUT
+      summary: Update my account
+      operationId: updateMyAccount
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    login:
+                      type: string
+                    admin:
+                      type: boolean
+                    password:
+                      type: string
+                    firstname:
+                      type: string
+                    lastname:
+                      type: string
+                    mail:
+                      type: string
+                    language:
+                      type: string
+                    auth_source_id:
+                      type: integer
+                      nullable: true
+                    mail_notification:
+                      type: string
+                      enum:
+                      - all
+                      - selected
+                      - only_my_events
+                      - only_assigned
+                      - only_owner
+                      - none
+                    notified_project_ids:
+                      type: array
+                      items:
+                        type: integer
+                    must_change_passwd:
+                      type: boolean
+                    generate_password:
+                      type: boolean
+                    status:
+                      type: integer
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+                    group_ids:
+                      type: array
+                      items:
+                        type: integer
+                pref:
+                  $ref: '#/components/schemas/pref'
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+  /users.json:
+    get:
+      tags:
+      - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#GET
+      summary: List users
+      operationId: getUsers
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/offset
+      - $ref: ./redmine-core.yaml#/components/parameters/limit
+      - $ref: ./redmine-core.yaml#/components/parameters/nometa
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_nometa
+      - name: status
+        in: query
+        schema:
+          type: integer
+      - name: name
+        in: query
+        schema:
+          type: string
+      - name: group_id
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - users
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/user.simple'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+      - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#POST
+      summary: Create user
+      operationId: createUser
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - user
+              properties:
+                user:
+                  type: object
+                  required:
+                  - login
+                  - firstname
+                  - lastname
+                  - mail
+                  properties:
+                    login:
+                      type: string
+                    admin:
+                      type: boolean
+                    password:
+                      type: string
+                    firstname:
+                      type: string
+                    lastname:
+                      type: string
+                    mail:
+                      type: string
+                    language:
+                      type: string
+                    auth_source_id:
+                      type: integer
+                      nullable: true
+                    mail_notification:
+                      type: string
+                      enum:
+                      - all
+                      - selected
+                      - only_my_events
+                      - only_assigned
+                      - only_owner
+                      - none
+                    notified_project_ids:
+                      type: array
+                      items:
+                        type: integer
+                    must_change_passwd:
+                      type: boolean
+                    generate_password:
+                      type: boolean
+                    status:
+                      type: integer
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+                send_information:
+                  type: boolean
+                pref:
+                  $ref: '#/components/schemas/pref'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/user'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+  /users/current.json:
+    get:
+      tags:
+      - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#GET-2
+      summary: Show current user
+      operationId: getCurrentUser
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - name: include
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - memberships
+            - groups
+        explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - user
+                properties:
+                  user:
+                    $ref: '#/components/schemas/user'
+  /users/{user_id}.json:
+    get:
+      tags:
+      - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#GET-2
+      summary: Show user
+      operationId: getUser
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/user_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - name: include
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - memberships
+            - groups
+        explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - user
+                properties:
+                  user:
+                    $ref: '#/components/schemas/user'
+    put:
+      tags:
+      - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#PUT
+      summary: Update user
+      operationId: updateUser
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/user_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    login:
+                      type: string
+                    admin:
+                      type: boolean
+                    password:
+                      type: string
+                    firstname:
+                      type: string
+                    lastname:
+                      type: string
+                    mail:
+                      type: string
+                    language:
+                      type: string
+                    auth_source_id:
+                      type: integer
+                      nullable: true
+                    mail_notification:
+                      type: string
+                      enum:
+                      - all
+                      - selected
+                      - only_my_events
+                      - only_assigned
+                      - only_owner
+                      - none
+                    notified_project_ids:
+                      type: array
+                      items:
+                        type: integer
+                    must_change_passwd:
+                      type: boolean
+                    generate_password:
+                      type: boolean
+                    status:
+                      type: integer
+                    custom_fields:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_fields
+                    custom_field_values:
+                      $ref: ./redmine-core.yaml#/components/schemas/custom_field_values
+                    group_ids:
+                      type: array
+                      items:
+                        type: integer
+                send_information:
+                  type: boolean
+                pref:
+                  $ref: '#/components/schemas/pref'
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+    delete:
+      tags:
+      - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#DELETE
+      summary: Delete user
+      operationId: deleteUser
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/user_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Redmine-API-Key
+    ApiKeyInQueryAuth:
+      type: apiKey
+      in: query
+      name: key
+  schemas:
+    group.simple:
+      type: object
+      required:
+      - id
+      - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+    user:
+      type: object
+      required:
+      - id
+      - login
+      - admin
+      - firstname
+      - lastname
+      - mail
+      - created_on
+      - updated_on
+      - last_login_on
+      - passwd_changed_on
+      - twofa_scheme
+      - api_key
+      - status
+      properties:
+        id:
+          type: integer
+        login:
+          type: string
+        admin:
+          type: boolean
+        firstname:
+          type: string
+        lastname:
+          type: string
+        mail:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        last_login_on:
+          type: string
+          format: date-time
+          nullable: true
+        passwd_changed_on:
+          type: string
+          format: date-time
+          nullable: true
+        twofa_scheme:
+          type: object
+          nullable: true
+        api_key:
+          type: string
+        status:
+          type: integer
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+        groups:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        memberships:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - project
+            - roles
+            properties:
+              id:
+                type: integer
+              project:
+                $ref: ./redmine-core.yaml#/components/schemas/id_name
+              roles:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - name
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    inherited:
+                      type: boolean
+    user.simple:
+      type: object
+      required:
+      - id
+      - login
+      - admin
+      - firstname
+      - lastname
+      - mail
+      - created_on
+      - updated_on
+      - last_login_on
+      - passwd_changed_on
+      - twofa_scheme
+      properties:
+        id:
+          type: integer
+        login:
+          type: string
+        admin:
+          type: boolean
+        firstname:
+          type: string
+        lastname:
+          type: string
+        mail:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        last_login_on:
+          type: string
+          format: date-time
+          nullable: true
+        passwd_changed_on:
+          type: string
+          format: date-time
+          nullable: true
+        twofa_scheme:
+          type: object
+          nullable: true
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+    pref:
+      type: object
+      properties:
+        hide_mail:
+          type: boolean
+        time_zone:
+          type: string
+          nullable: true
+        comments_sorting:
+          type: string
+          enum:
+          - asc
+          - desc
+        warn_on_leaving_unsaved:
+          type: boolean
+        no_self_notified:
+          type: boolean
+        notify_about_high_priority_issues:
+          type: boolean
+        textarea_font:
+          type: string
+          enum:
+          - monospace
+          - proportional
+          nullable: true
+        recently_used_projects:
+          type: integer
+        history_default_tab:
+          type: string
+          enum:
+          - notes
+          - history
+          - properties
+          - time_entries
+          - changesets
+          - last_tab_visited
+        toolbar_language_options:
+          type: string
+        default_issue_query:
+          type: integer
+          nullable: true
+        default_project_query:
+          type: integer
+          nullable: true
+        auto_watch_on:
+          type: string
+          enum:
+          - issue_contributed_to
+          nullable: true
+    my_account:
+      type: object
+      required:
+      - user
+      properties:
+        user:
+          required:
+          - id
+          - login
+          - admin
+          - firstname
+          - lastname
+          - mail
+          - created_on
+          - last_login_on
+          - api_key
+          properties:
+            id:
+              type: integer
+            login:
+              type: string
+            admin:
+              type: boolean
+            firstname:
+              type: string
+            lastname:
+              type: string
+            mail:
+              type: string
+            created_on:
+              type: string
+              format: date-time
+            last_login_on:
+              type: string
+              format: date-time
+            api_key:
+              type: string
+            custom_fields:
+              type: array
+              items:
+                $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+    group:
+      type: object
+      required:
+      - id
+      - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        custom_fields:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/custom_field_value
+        users:
+          type: array
+          items:
+            $ref: ./redmine-core.yaml#/components/schemas/id_name
+        memberships:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - project
+            - roles
+            properties:
+              id:
+                type: integer
+              project:
+                $ref: ./redmine-core.yaml#/components/schemas/id_name
+              roles:
+                type: array
+                items:
+                  $ref: ./redmine-core.yaml#/components/schemas/id_name

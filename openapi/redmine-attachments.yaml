@@ -1,0 +1,291 @@
+openapi: 3.0.3
+info:
+  title: Redmine API - Attachments
+  description: 'Part of the modularized Redmine OpenAPI specification. Covers: Attachments, Files. Depends
+    on ./redmine-core.yaml for shared parameters, security schemes, and common schemas.'
+  contact:
+    name: d-yoshi/redmine-openapi
+    url: https://github.com/d-yoshi/redmine-openapi
+  license:
+    name: MIT
+    url: https://github.com/d-yoshi/redmine-openapi/blob/main/LICENSE
+  version: 0.16.0
+servers:
+- url: /
+security:
+- BasicAuth: []
+- ApiKeyAuth: []
+- ApiKeyInQueryAuth: []
+tags:
+- name: Attachments
+  description: 'Status: Beta, Availablity: 1.3'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Attachments
+- name: Files
+  description: 'Status: Alpha, Availablity: 3.4'
+  externalDocs:
+    url: https://www.redmine.org/projects/redmine/wiki/Rest_Files
+paths:
+  /attachments/download/{attachment_id}/{filename}:
+    get:
+      tags:
+      - Attachments
+      summary: Download attachment file
+      operationId: downloadAttachmentFile
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/attachment_id
+      - $ref: ./redmine-core.yaml#/components/parameters/filename
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+  /attachments/thumbnail/{attachment_id}:
+    get:
+      tags:
+      - Attachments
+      summary: Download thumbnail
+      operationId: downloadThumbnail
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/attachment_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+  /attachments/{attachment_id}.json:
+    get:
+      tags:
+      - Attachments
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Attachments#GET
+      summary: Show attachment
+      operationId: getAttachment
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/attachment_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - attachment
+                properties:
+                  attachment:
+                    $ref: ./redmine-core.yaml#/components/schemas/attachment
+    patch:
+      tags:
+      - Attachments
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Attachments#PATCH
+      summary: Update attachment
+      operationId: updateAttachment
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/attachment_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attachment:
+                  type: object
+                  properties:
+                    filename:
+                      type: string
+                    description:
+                      type: string
+      responses:
+        '204':
+          description: ''
+    delete:
+      tags:
+      - Attachments
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Attachments#DELETE
+      summary: Delete attachment
+      operationId: deleteAttachment
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/attachment_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/files.json:
+    get:
+      tags:
+      - Files
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Files#GET
+      summary: List files
+      operationId: getFiles
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - files
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/file'
+    post:
+      tags:
+      - Files
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Files#POST
+      summary: Create file
+      operationId: createFile
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/project_id
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: object
+                  required:
+                  - token
+                  properties:
+                    token:
+                      type: string
+                    version_id:
+                      type: integer
+                    filename:
+                      type: string
+                    description:
+                      type: string
+                    content_type:
+                      type: string
+      responses:
+        '204':
+          description: ''
+  /uploads.json:
+    post:
+      tags:
+      - Attachments
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_api#Attaching-files
+      summary: Upload attachment file
+      operationId: uploadAttachmentFile
+      parameters:
+      - $ref: ./redmine-core.yaml#/components/parameters/format
+      - $ref: ./redmine-core.yaml#/components/parameters/x_redmine_switch_user
+      - name: filename
+        in: query
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - upload
+                properties:
+                  upload:
+                    type: object
+                    required:
+                    - id
+                    - token
+                    properties:
+                      id:
+                        type: integer
+                      token:
+                        type: string
+        '406':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: ./redmine-core.yaml#/components/schemas/errors
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Redmine-API-Key
+    ApiKeyInQueryAuth:
+      type: apiKey
+      in: query
+      name: key
+  schemas:
+    file:
+      type: object
+      required:
+      - id
+      - filename
+      - filesize
+      - content_type
+      - description
+      - content_url
+      - author
+      - created_on
+      - digest
+      - downloads
+      properties:
+        id:
+          type: integer
+        filename:
+          type: string
+        filesize:
+          type: integer
+        content_type:
+          type: string
+        description:
+          type: string
+        content_url:
+          type: string
+        thumbnail_url:
+          type: string
+        author:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        created_on:
+          type: string
+          format: date-time
+        version:
+          $ref: ./redmine-core.yaml#/components/schemas/id_name
+        digest:
+          type: string
+        downloads:
+          type: integer
