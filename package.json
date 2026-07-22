@@ -1,5 +1,5 @@
 {
-  "name": "@left4dev/redmine-mcp",
+  "name": "@0xkillaflow/agama-redmine-mcp",
   "version": "1.0.0",
   "description": "Model Context Protocol (MCP) server for Redmine — exposes Redmine to AI agents as a small set of intent-shaped, well-typed tools.",
   "keywords": [
@@ -19,7 +19,7 @@
     "node": ">=20"
   },
   "bin": {
-    "redmine-mcp": "dist/index.js"
+    "agama-redmine-mcp": "dist/index.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -30,11 +30,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/epistax1s/redmine-mcp.git"
+    "url": "git+https://github.com/0xkillaflow/agama-redmine-mcp.git"
   },
-  "homepage": "https://github.com/epistax1s/redmine-mcp#readme",
+  "homepage": "https://github.com/0xkillaflow/agama-redmine-mcp#readme",
   "bugs": {
-    "url": "https://github.com/epistax1s/redmine-mcp/issues"
+    "url": "https://github.com/0xkillaflow/agama-redmine-mcp/issues"
   },
   "publishConfig": {
     "access": "public",
