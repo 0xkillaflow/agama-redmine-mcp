@@ -20,7 +20,7 @@ export interface ServerInfo {
 }
 
 /** Defaults used only if the package manifest cannot be located or parsed. */
-const FALLBACK: ServerInfo = { name: 'redmine-mcp', version: '0.0.0' };
+const FALLBACK: ServerInfo = { name: 'agama-redmine-mcp', version: '0.0.0' };
 
 /** Walk up from `startDir` until a `package.json` is found; `undefined` if none. */
 function findPackageJson(startDir: string): string | undefined {

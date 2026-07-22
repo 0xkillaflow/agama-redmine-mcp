@@ -7,8 +7,8 @@ its own step-by-step recipe in [`docs/adding-a-tool.md`](./docs/adding-a-tool.md
 ## Development setup
 
 ```bash
-git clone https://github.com/epistax1s/redmine-mcp.git
-cd redmine-mcp
+git clone https://github.com/0xkillaflow/agama-redmine-mcp.git
+cd agama-redmine-mcp
 npm install
 npm test          # everything should be green on a clean checkout
 ```
@@ -18,19 +18,19 @@ integration tests are opt-in (see below).
 
 ### Scripts
 
-| Script                 | What it does                                      |
-| ---------------------- | ------------------------------------------------- |
-| `npm run dev`          | Watch-run the stdio server via `tsx`              |
-| `npm run build`        | Bundle to `dist/` (ESM + shebang) with `tsup`     |
-| `npm test`             | Run the Vitest suite once                         |
-| `npm run test:watch`   | Vitest in watch mode                              |
-| `npm run coverage`     | Run tests with coverage (thresholds enforced)     |
-| `npm run typecheck`    | `tsc --noEmit` (strict)                           |
-| `npm run lint`         | ESLint, including hexagonal import boundaries     |
-| `npm run format`       | Prettier write                                    |
-| `npm run format:check` | Prettier check (what CI runs)                     |
+| Script                 | What it does                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| `npm run dev`          | Watch-run the stdio server via `tsx`                                              |
+| `npm run build`        | Bundle to `dist/` (ESM + shebang) with `tsup`                                     |
+| `npm test`             | Run the Vitest suite once                                                         |
+| `npm run test:watch`   | Vitest in watch mode                                                              |
+| `npm run coverage`     | Run tests with coverage (thresholds enforced)                                     |
+| `npm run typecheck`    | `tsc --noEmit` (strict)                                                           |
+| `npm run lint`         | ESLint, including hexagonal import boundaries                                     |
+| `npm run format`       | Prettier write                                                                    |
+| `npm run format:check` | Prettier check (what CI runs)                                                     |
 | `npm run gen:tools`    | Regenerate the tool reference (`docs/tools.md` + `docs/tools/`) from the registry |
-| `npm run changeset`    | Record a changeset for your change (see below)    |
+| `npm run changeset`    | Record a changeset for your change (see below)                                    |
 
 ### Integration tests (optional)
 
@@ -72,7 +72,7 @@ Dependencies always point inward. A layer violation fails `npm run lint`.
 
 ### Branches, commits, and PRs
 
-- Branch off `main` with a descriptive name: `feat/list-users`, `fix/error-mapper-429`,
+- Branch off `master` with a descriptive name: `feat/list-users`, `fix/error-mapper-429`,
   `docs/troubleshooting`.
 - **Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/).** The
   subject is `type(optional-scope): description`, with the description in the imperative mood and

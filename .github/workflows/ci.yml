@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
   # Manual trigger, primarily to run the opt-in integration job below.
   workflow_dispatch:
