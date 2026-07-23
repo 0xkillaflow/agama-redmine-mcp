@@ -24,7 +24,7 @@ whole team.
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 22+
 - A Redmine instance with the REST API enabled (_Administration → Settings → API_)
 - A Redmine API key — go to **My account → API access key** while signed in
 

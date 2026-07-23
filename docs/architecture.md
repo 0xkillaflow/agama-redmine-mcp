@@ -394,7 +394,7 @@ Framework: **Vitest**.
 
 ## 13. Technology stack & conventions
 
-- **Runtime** — Node.js 20+, ESM only (`"type": "module"`), `.js` import specifiers.
+- **Runtime** — Node.js 22+, ESM only (`"type": "module"`), `.js` import specifiers.
 - **Language** — TypeScript `strict` (+ `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`).
 - **MCP** — `@modelcontextprotocol/sdk`, high-level **`McpServer`** / `registerTool` only (never the
   deprecated low-level `Server`).
