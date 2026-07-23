@@ -12,8 +12,14 @@ updates:
       production-dependencies:
         dependency-type: production
 
-  # Keep the GitHub Actions used in the workflows up to date.
+  # Keep the GitHub Actions used in the workflows up to date. Grouped: action
+  # bumps are uniform `uses:` line changes verified by the PR's own CI run, so
+  # one PR per batch beats one PR per action.
   - package-ecosystem: github-actions
     directory: '/'
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - '*'
