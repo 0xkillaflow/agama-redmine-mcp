@@ -24,7 +24,7 @@ export const configSchema = z
           return new URL(raw).href.replace(/\/+$/, '');
         } catch {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: 'custom',
             message: 'must be a valid URL (e.g. https://redmine.example.com)',
           });
           return z.NEVER;
@@ -59,7 +59,7 @@ export const configSchema = z
     // credentials per request, so it does not require REDMINE_API_KEY.
     if (cfg.MCP_TRANSPORT === 'stdio' && !cfg.REDMINE_API_KEY) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         path: ['REDMINE_API_KEY'],
         message: 'REDMINE_API_KEY is required when MCP_TRANSPORT is "stdio"',
       });

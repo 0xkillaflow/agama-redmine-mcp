@@ -65,7 +65,8 @@ export interface ToolDefinition<InputShape extends z.ZodRawShape, Output = unkno
   /** Optional behavioural hints (read-only, destructive, …). */
   readonly annotations?: ToolAnnotations;
   /** Execute the tool against a resolved {@link ToolContext}. */
-  handle(input: z.objectOutputType<InputShape, z.ZodTypeAny>, ctx: ToolContext): Promise<Output>;
+  // zod v4 removed `objectOutputType`; infer the parsed shape via `ZodObject`.
+  handle(input: z.infer<z.ZodObject<InputShape>>, ctx: ToolContext): Promise<Output>;
 }
 
 /**

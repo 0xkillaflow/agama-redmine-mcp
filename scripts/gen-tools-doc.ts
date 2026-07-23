@@ -27,83 +27,90 @@ const DO_NOT_EDIT =
 
 /**
  * Narrow view over the Zod internals we read reflectively. Zod does not expose a
- * public schema-introspection API, so we reach into `_def` through a single
+ * public schema-introspection API, so we reach into `def` through a single
  * `unknown` cast rather than sprinkling `any`.
+ *
+ * `def.type` is a lowercase kind tag (`'string'`, `'optional'`, `'pipe'`, …);
+ * arrays expose their `element`, enums their `entries`, and a transform is a
+ * `pipe` node whose `in` side is the underlying schema. This mirrors zod v4
+ * internals and must be revisited on the next major bump.
  */
 interface ZodInternal {
-  readonly _def: {
-    readonly typeName?: string;
+  readonly def: {
+    readonly type?: string;
     readonly innerType?: z.ZodTypeAny;
-    readonly schema?: z.ZodTypeAny;
-    readonly type?: z.ZodTypeAny;
-    readonly values?: readonly string[];
+    readonly in?: z.ZodTypeAny;
+    readonly element?: z.ZodTypeAny;
+    readonly entries?: Readonly<Record<string, string>>;
     readonly options?: readonly z.ZodTypeAny[];
-    readonly checks?: ReadonlyArray<{ readonly kind: string }>;
   };
+  readonly isInt?: boolean;
   readonly description?: string;
   isOptional(): boolean;
 }
 
 const peek = (schema: z.ZodTypeAny): ZodInternal => schema as unknown as ZodInternal;
 
-/** Unwrap Optional/Default/Nullable/Effects wrappers to the underlying schema. */
+/** Unwrap Optional/Default/Nullable/Pipe(transform) wrappers to the underlying schema. */
 function unwrap(schema: z.ZodTypeAny): z.ZodTypeAny {
-  const { _def } = peek(schema);
-  if (_def.typeName === 'ZodEffects' && _def.schema) return unwrap(_def.schema);
-  if (_def.innerType) return unwrap(_def.innerType);
+  const { def } = peek(schema);
+  if (def.type === 'pipe' && def.in) return unwrap(def.in);
+  if (def.innerType) return unwrap(def.innerType);
   return schema;
 }
 
 /** A human-readable type label for a parameter (best-effort, drift-free). */
 function typeLabel(schema: z.ZodTypeAny): string {
   const inner = unwrap(schema);
-  const { _def } = peek(inner);
-  switch (_def.typeName) {
-    case 'ZodString':
+  const { def } = peek(inner);
+  switch (def.type) {
+    case 'string':
       return 'string';
-    case 'ZodNumber':
-      return _def.checks?.some((c) => c.kind === 'int') ? 'integer' : 'number';
-    case 'ZodBoolean':
+    case 'number':
+      return peek(inner).isInt === true ? 'integer' : 'number';
+    case 'boolean':
       return 'boolean';
-    case 'ZodArray':
-      return _def.type ? `${typeLabel(_def.type)}[]` : 'array';
-    case 'ZodEnum':
-      return (_def.values ?? []).map((v) => `\`${v}\``).join(' \\| ');
-    case 'ZodUnion':
-      return (_def.options ?? []).map(typeLabel).join(' \\| ');
-    case 'ZodRecord':
+    case 'array':
+      return def.element ? `${typeLabel(def.element)}[]` : 'array';
+    case 'enum':
+      return Object.values(def.entries ?? {})
+        .map((v) => `\`${v}\``)
+        .join(' \\| ');
+    case 'union':
+      return (def.options ?? []).map(typeLabel).join(' \\| ');
+    case 'record':
       return 'object (map)';
-    case 'ZodObject':
+    case 'object':
       return 'object';
     default:
-      return _def.typeName?.replace(/^Zod/, '').toLowerCase() ?? 'value';
+      return def.type ?? 'value';
   }
 }
 
 /** A representative sample value for a parameter, used in the example call. */
 function sampleValue(name: string, schema: z.ZodTypeAny): unknown {
   const inner = unwrap(schema);
-  const { _def } = peek(inner);
-  switch (_def.typeName) {
-    case 'ZodString':
+  const { def } = peek(inner);
+  switch (def.type) {
+    case 'string':
       if (name === 'q') return 'login button bug';
       if (/(_on|_date)$/.test(name) || name === 'from' || name === 'to') return '2024-01-15';
       if (/_id$/.test(name)) return '42';
       return 'text';
-    case 'ZodNumber':
-      return _def.checks?.some((c) => c.kind === 'int') ? 42 : 3.5;
-    case 'ZodBoolean':
+    case 'number':
+      return peek(inner).isInt === true ? 42 : 3.5;
+    case 'boolean':
       return true;
-    case 'ZodArray':
-      return _def.type ? [sampleValue(name, _def.type)] : [];
-    case 'ZodEnum':
-      return _def.values?.[0] ?? 'value';
-    case 'ZodUnion':
-      return _def.options?.[0] ? sampleValue(name, _def.options[0]) : 'value';
-    case 'ZodRecord':
+    case 'array':
+      return def.element ? [sampleValue(name, def.element)] : [];
+    case 'enum':
+      return Object.values(def.entries ?? {})[0] ?? 'value';
+    case 'union':
+      return def.options?.[0] ? sampleValue(name, def.options[0]) : 'value';
+    case 'record':
       return { '5': 'value' };
     default:
-      return _def.typeName === 'ZodNumber' ? 42 : 'value';
+      return 'value';
   }
 }
 

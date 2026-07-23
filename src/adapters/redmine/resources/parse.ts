@@ -39,5 +39,6 @@ export function parseEnvelope<Schema extends z.ZodTypeAny>(
   context: string,
 ): z.infer<Schema> {
   const parsed = parseBody(z.object({ [key]: schema }), body, context);
-  return (parsed as Record<string, z.infer<Schema>>)[key];
+  // The envelope parse guarantees `key` exists; assert past the index signature.
+  return (parsed as Record<string, z.infer<Schema>>)[key] as z.infer<Schema>;
 }
