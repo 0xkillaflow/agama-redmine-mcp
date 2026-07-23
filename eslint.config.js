@@ -1,18 +1,19 @@
 // @ts-check
 import tseslint from 'typescript-eslint';
-import importPlugin from 'eslint-plugin-import';
+import importX from 'eslint-plugin-import-x';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 
 /**
  * Flat ESLint config.
  *
  * Two project-specific rules on top of the typescript-eslint recommended set:
  *  1. Hexagonal import boundaries (architecture §4, ADR-0001) via
- *     `import/no-restricted-paths` — dependencies point strictly inward:
+ *     `import-x/no-restricted-paths` — dependencies point strictly inward:
  *     domain → (nothing), application → domain only, adapters/config/infra → domain + application.
  *  2. No writes to stdout (`console.log`/`info`/`debug`) — stdout is the JSON-RPC
  *     channel in stdio mode (ADR-0006). `console.warn`/`error` (stderr) are allowed.
  *
- * The TypeScript resolver is required so `import/no-restricted-paths` can resolve
+ * The TypeScript resolver is required so `import-x/no-restricted-paths` can resolve
  * NodeNext `.js` specifiers back to their `.ts` source files.
  */
 export default tseslint.config(
@@ -23,19 +24,19 @@ export default tseslint.config(
   {
     files: ['src/**/*.ts'],
     plugins: {
-      import: importPlugin,
+      'import-x': importX,
     },
     settings: {
-      'import/resolver': {
-        typescript: {
+      'import-x/resolver-next': [
+        createTypeScriptImportResolver({
           alwaysTryTypes: true,
           project: './tsconfig.json',
-        },
-      },
+        }),
+      ],
     },
     rules: {
       'no-console': ['error', { allow: ['warn', 'error'] }],
-      'import/no-restricted-paths': [
+      'import-x/no-restricted-paths': [
         'error',
         {
           zones: [
