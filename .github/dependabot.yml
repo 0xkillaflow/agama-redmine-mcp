@@ -11,6 +11,16 @@ updates:
         dependency-type: development
       production-dependencies:
         dependency-type: production
+    ignore:
+      # @types/node tracks the LOWEST supported Node major (engines.node), not
+      # the latest — newer types would let tsc accept APIs missing on the
+      # declared minimum runtime. Raise together with engines.node only.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # TS 7.x (native compiler) is blocked until typescript-eslint's
+      # `typescript` peer range covers it (currently capped at <6.1.0).
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
 
   # Keep the GitHub Actions used in the workflows up to date. Grouped: action
   # bumps are uniform `uses:` line changes verified by the PR's own CI run, so
