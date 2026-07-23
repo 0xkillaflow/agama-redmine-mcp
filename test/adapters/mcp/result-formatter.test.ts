@@ -100,7 +100,7 @@ describe('formatError', () => {
       .superRefine((value, ctx) => {
         if ((value.issue_id !== undefined) === (value.project_id !== undefined)) {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: 'custom',
             message: 'Provide exactly one of issue_id or project_id.',
             path: ['issue_id'],
           });

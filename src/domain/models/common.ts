@@ -111,7 +111,8 @@ export interface Paginated<T> {
 export function paginated<ItemSchema extends z.ZodTypeAny>(
   key: string,
   itemSchema: ItemSchema,
-): z.ZodType<Paginated<z.infer<ItemSchema>>, z.ZodTypeDef, unknown> {
+  // zod v4: `ZodType` is parameterized as <Output, Input> (no `ZodTypeDef`).
+): z.ZodType<Paginated<z.infer<ItemSchema>>, unknown> {
   const envelope = z.object({
     [key]: z.array(itemSchema),
     total_count: z.number().int().nonnegative().optional(),
@@ -149,6 +150,7 @@ export type Include<Value extends string> = readonly Value[];
  */
 export function includeSchema<const Values extends readonly [string, ...string[]]>(
   values: Values,
-): z.ZodArray<z.ZodEnum<[Values[number], ...Values[number][]]>> {
-  return z.array(z.enum(values as unknown as [Values[number], ...Values[number][]]));
+  // zod v4: `ZodEnum` is parameterized by a value record, not a values tuple.
+): z.ZodArray<z.ZodEnum<{ [Value in Values[number]]: Value }>> {
+  return z.array(z.enum(values));
 }

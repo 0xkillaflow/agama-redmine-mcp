@@ -60,7 +60,7 @@ export const CreateTimeEntryInputSchema = z
     const hasProject = input.project_id !== undefined;
     if (hasIssue === hasProject) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: 'Provide exactly one of issue_id or project_id.',
         path: ['issue_id'],
       });

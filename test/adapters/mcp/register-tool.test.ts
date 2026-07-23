@@ -196,7 +196,7 @@ describe('registerTool', () => {
       handle: async () => {
         const schema = z.object({}).superRefine((_value, ctx) => {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: 'custom',
             message: 'Provide exactly one of issue_id or project_id.',
             path: ['issue_id'],
           });
