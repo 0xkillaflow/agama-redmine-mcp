@@ -103,6 +103,9 @@ export function buildContainer(config: AppConfig): Container {
     clientFactory,
     logger,
     serverInfo,
+    // The filesystem allowlist for the attachment tools. Empty by default, which
+    // means the tools refuse every path — file access is opt-in.
+    allowedDirectories: config.REDMINE_ALLOWED_DIRECTORIES,
   });
 
   return { server, config, logger, credentialProvider, clientFactory };

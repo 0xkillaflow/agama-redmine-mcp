@@ -37,11 +37,14 @@ describe('createRedmineHttpClient', () => {
     vi.unstubAllGlobals();
   });
 
-  it('exposes all five resources', () => {
+  it('exposes every resource of the port', () => {
     const client = build();
     expect(Object.keys(client).sort()).toEqual([
+      'attachments',
+      'issueRelations',
       'issues',
       'projects',
+      'referenceData',
       'search',
       'timeEntries',
       'users',
@@ -84,5 +87,6 @@ describe('createRedmineClientFactory', () => {
     expect(client.timeEntries).toBeDefined();
     expect(client.users).toBeDefined();
     expect(client.search).toBeDefined();
+    expect(client.referenceData).toBeDefined();
   });
 });

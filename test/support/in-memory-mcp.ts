@@ -26,6 +26,8 @@ export interface InMemoryMcpOptions {
   readonly redmine?: RedmineClient;
   /** Logger handed to the server (defaults to a {@link silentLogger}). */
   readonly logger?: Logger;
+  /** Filesystem allowlist for the attachment tools (defaults to empty = no access). */
+  readonly allowedDirectories?: readonly string[];
 }
 
 /** A connected in-memory MCP client plus ergonomic helpers. */
@@ -64,6 +66,7 @@ export async function connectInMemoryMcp(options: InMemoryMcpOptions = {}): Prom
     clientFactory,
     logger,
     serverInfo: { name: 'redmine-mcp-test', version: '0.0.0-test' },
+    allowedDirectories: options.allowedDirectories ?? [],
   });
 
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();

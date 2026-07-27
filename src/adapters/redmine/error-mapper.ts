@@ -90,12 +90,17 @@ export function mapHttpError(input: HttpErrorInput): RedmineError {
       return new RedmineForbiddenError('Access forbidden', { details, cause });
     case 404:
       return new RedmineNotFoundError('Resource not found', { details, cause });
+    // `406` is Redmine's rejection code for a refused upload (a file over
+    // `attachment_max_size`, a disallowed type). It carries the same `errors`
+    // envelope as a `422`, so it is a validation failure the agent can act on —
+    // not the "unexpected response" the default branch would report.
+    case 406:
     case 422: {
       // Parse Redmine's `{ errors: string[] }` envelope defensively; a body that
       // does not match yields an empty message list and the error's generic text.
       const parsed = RedmineErrorsBodySchema.safeParse(body);
       const messages = parsed.success ? parsed.data.errors : [];
-      return new RedmineValidationError(messages, { details, cause });
+      return new RedmineValidationError(messages, { status, details, cause });
     }
     case 429: {
       const retryAfter = parseRetryAfter(input.headers?.get('retry-after'));

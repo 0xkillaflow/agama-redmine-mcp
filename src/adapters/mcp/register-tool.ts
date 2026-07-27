@@ -16,7 +16,7 @@
 import { ZodError, type z } from 'zod';
 import type { McpServer, ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestInfo } from '@modelcontextprotocol/sdk/types.js';
-import { isRedmineError } from '../../domain/errors/index.js';
+import { FileAccessError, isRedmineError } from '../../domain/errors/index.js';
 import type { CredentialProvider, Logger, RequestMeta } from '../../domain/ports/index.js';
 import type { ToolAnnotations, ToolContext } from '../../application/tool-definition.js';
 import type { AnyToolDefinition } from '../../application/tool-registry.js';
@@ -31,6 +31,11 @@ export interface RegisterToolDeps {
   readonly clientFactory: RedmineClientFactory;
   /** Base logger; the handler receives a child scoped to the tool. */
   readonly logger: Logger;
+  /**
+   * Filesystem allowlist handed to every handler (the attachment tools validate
+   * caller-supplied paths against it). Omitted ⇒ empty ⇒ no local file access.
+   */
+  readonly allowedDirectories?: readonly string[];
 }
 
 /**
@@ -63,7 +68,7 @@ export function registerTool(
   def: AnyToolDefinition,
   deps: RegisterToolDeps,
 ): void {
-  const { credentialProvider, clientFactory, logger } = deps;
+  const { credentialProvider, clientFactory, logger, allowedDirectories = [] } = deps;
 
   // Built as one object (not a conditional spread) so the SDK can infer the
   // tool's input args from `inputSchema`; `annotations` is set only when present
@@ -84,7 +89,11 @@ export function registerTool(
     try {
       const credentials = await credentialProvider.resolve(requestMetaFrom(extra));
       const redmine = clientFactory.create(credentials);
-      const ctx: ToolContext = { redmine, logger: logger.child({ tool: def.name }) };
+      const ctx: ToolContext = {
+        redmine,
+        logger: logger.child({ tool: def.name }),
+        allowedDirectories,
+      };
       // The SDK-parsed args match the handler's input shape; bridge the SDK's
       // shape-output type to the handler's `objectOutputType` view.
       const output = await def.handle(args as Parameters<typeof def.handle>[0], ctx);
@@ -92,6 +101,10 @@ export function registerTool(
     } catch (err) {
       if (isRedmineError(err)) {
         logger.warn('tool handler failed', { tool: def.name, code: err.code });
+      } else if (err instanceof FileAccessError) {
+        // A path outside the allowlist is a rejected request, not a fault —
+        // log the code, never the path the caller asked for.
+        logger.warn('tool file access denied', { tool: def.name, code: err.code });
       } else if (err instanceof ZodError) {
         // Expected bad input (e.g. a cross-field `superRefine` re-parse), not a
         // server fault — log at warn and let the formatter surface the details.

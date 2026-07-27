@@ -40,6 +40,19 @@ export type {
   UploadToken,
 } from './issue.js';
 
+// Issue relations (also embedded in an issue under `include=relations`)
+export {
+  IssueRelationSchema,
+  RelationTypeSchema,
+  CreateIssueRelationInputSchema,
+} from './issue-relation.js';
+export type { IssueRelation, RelationType, CreateIssueRelationInput } from './issue-relation.js';
+
+// Attachments (the upload/download side; `AttachmentRefSchema` lives in common,
+// `UploadTokenSchema` in issue — both re-exported above/below for discoverability)
+export { UploadResultSchema } from './attachment.js';
+export type { UploadResult, UploadFileInput, DownloadResult } from './attachment.js';
+
 // Projects
 export {
   ProjectSimpleSchema,
@@ -66,8 +79,12 @@ export type { TimeEntry, ListTimeEntriesParams, CreateTimeEntryInput } from './t
 
 // Users
 export { UserSchema, UserSimpleSchema, CurrentUserIncludeSchema } from './user.js';
-export type { User, UserSimple, CurrentUserInclude } from './user.js';
+export type { User, UserSimple, CurrentUserInclude, ListUsersParams } from './user.js';
 
 // Search
 export { SearchResultSchema, SearchParamsSchema } from './search.js';
 export type { SearchResult, SearchParams } from './search.js';
+
+// Reference data (statuses, trackers, priorities, activities, document categories)
+export { ReferenceDataKindSchema, TrackerSchema, EnumerationSchema } from './reference-data.js';
+export type { ReferenceDataKind, Tracker, Enumeration, ReferenceData } from './reference-data.js';

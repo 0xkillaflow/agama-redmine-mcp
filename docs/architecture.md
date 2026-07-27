@@ -86,10 +86,12 @@ src/
 ├── domain/                         # Pure. No I/O, no SDK, no Node built-ins beyond types.
 │   ├── models/                     # Zod schemas + inferred TS types for Redmine resources
 │   │   ├── common.ts               #   id_name, custom fields, pagination envelope, include<>
-│   │   ├── issue.ts · project.ts · time-entry.ts · user.ts · search.ts
+│   │   ├── issue.ts · project.ts · time-entry.ts · user.ts · search.ts · reference-data.ts
+│   │   ├── attachment.ts           #   upload result/input, download result
 │   │   └── index.ts
 │   ├── errors/                     # Typed domain errors
-│   │   └── redmine-errors.ts       #   RedmineError + Auth/Forbidden/NotFound/Validation/RateLimit/Transport
+│   │   ├── redmine-errors.ts       #   RedmineError + Auth/Forbidden/NotFound/Validation/RateLimit/Transport
+│   │   └── file-access-error.ts    #   FileAccessError — a refused local path (outside the hierarchy)
 │   └── ports/                      # Interfaces = the hexagon boundary
 │       ├── redmine-client.ts       #   RedmineClient (resource-grouped) + RedmineCredentials
 │       ├── credential-provider.ts  #   CredentialProvider + RequestMeta
@@ -98,12 +100,16 @@ src/
 ├── application/                    # Use-cases. Depends on ports only.
 │   ├── tool-definition.ts          # ToolDefinition<I,O> contract + ToolContext + defineTool
 │   ├── tool-registry.ts            # Aggregates ToolDefinitions; rejects duplicate names
+│   ├── file-access.ts              # resolveAllowedPath — the filesystem allowlist guard
 │   └── tools/
-│       ├── issues/                 # list-issues, get-issue, create-issue, update-issue
+│       ├── issues/                 # list/get/create/update/delete-issue, manage-issue-watchers,
+│       │                           #   list/create/delete-issue-relation
 │       ├── projects/               # list-projects, get-project
 │       ├── time-entries/           # list-time-entries, create-time-entry
-│       ├── users/                  # get-current-user
+│       ├── users/                  # get-current-user, list-users
 │       ├── search/                 # search
+│       ├── reference/              # list-reference-data
+│       ├── attachments/            # upload-attachment, download-attachment
 │       └── index.ts                # the registered tool array
 │
 ├── adapters/
@@ -112,7 +118,9 @@ src/
 │   │   ├── http-requester.ts       #   fetch wrapper: base URL, headers, timeout, JSON
 │   │   ├── request-builder.ts      #   query serialization (arrays, cf_x, date operators)
 │   │   ├── error-mapper.ts         #   HTTP status/body → domain error
-│   │   └── resources/              #   issues.ts, projects.ts, time-entries.ts, users.ts, search.ts, parse.ts
+│   │   └── resources/              #   issues.ts, issue-relations.ts, projects.ts, time-entries.ts,
+│   │                               #   users.ts, search.ts, reference-data.ts, attachments.ts,
+│   │                               #   parse.ts
 │   ├── credentials/
 │   │   ├── env-credential-provider.ts     # stdio: REDMINE_API_KEY
 │   │   └── header-credential-provider.ts  # http: Authorization: Bearer …
@@ -151,10 +159,13 @@ tests supply a hand-written fake.
 ```ts
 export interface RedmineClient {
   readonly issues: IssuesResource;
+  readonly issueRelations: IssueRelationsResource;
   readonly projects: ProjectsResource;
   readonly timeEntries: TimeEntriesResource;
   readonly users: UsersResource;
   readonly search: SearchResource;
+  readonly referenceData: ReferenceDataResource;
+  readonly attachments: AttachmentsResource;
 }
 
 export interface IssuesResource {
@@ -165,6 +176,19 @@ export interface IssuesResource {
 }
 // …ProjectsResource, TimeEntriesResource, UsersResource, SearchResource similarly
 ```
+
+`IssueRelationsResource` is separate from `IssuesResource` because only listing and creating are
+issue-scoped (`/issues/{id}/relations.json`); reading and deleting a single relation go through the
+top-level `/relations/{id}.json`, which is also why deletion is keyed on the relation's own id.
+`listForIssue` returns a plain array, not a page — the endpoint sends no `total_count`.
+
+`ReferenceDataResource` is the one non-paginated collection: its endpoints return a bare
+`{ <key>: [...] }`, so `list(kind)` resolves a `{ kind, items }` value discriminated by `kind`
+rather than a `Paginated<T>` page.
+
+`AttachmentsResource` is the one binary one: `upload` takes **bytes, not a path**, and `download`
+returns bytes. Reading and writing local files is an application concern (§9.4), so the gateway —
+and every fake of it — stays filesystem-free.
 
 ### 5.2 `CredentialProvider` — how a request is authenticated
 
@@ -215,8 +239,9 @@ helper for input-type inference.
 
 ```ts
 export interface ToolContext {
-  readonly redmine: RedmineClient; // already authenticated for this request
+  readonly redmine: RedmineClient;              // already authenticated for this request
   readonly logger: Logger;
+  readonly allowedDirectories: readonly string[]; // the filesystem allowlist (§9.4)
 }
 
 export interface ToolDefinition<InputShape extends z.ZodRawShape, Output = unknown> {
@@ -293,6 +318,7 @@ exactly one place; everything else receives the validated `AppConfig`.
 | `REDMINE_API_KEY`    | yes (stdio)    | —       | API key for the single user (stdio mode) |
 | `MCP_TRANSPORT`      | no             | `stdio` | `stdio` \| `http`                        |
 | `REDMINE_TIMEOUT_MS` | no             | `30000` | Per-request timeout                      |
+| `REDMINE_ALLOWED_DIRECTORIES` | no    | _empty_ | Filesystem allowlist for the attachment tools (§9.4) |
 | `LOG_LEVEL`          | no             | `info`  | `debug` \| `info` \| `warn` \| `error`   |
 | `HTTP_PORT`          | no (http only) | `3000`  | Reserved for the http transport          |
 
@@ -325,12 +351,29 @@ RedmineError (abstract)
 ```
 
 `error-mapper.ts` maps HTTP → these; `result-formatter.ts` maps these → agent-friendly `isError`
-tool results. Two error types sit outside this hierarchy at the edges: `ConfigError` (in `config/`)
-aborts startup before any Redmine call, and `NotImplementedError` (extends `Error`, not
-`RedmineError`) marks the http-transport capability gap. Both are handled at their own layer, not by
-the MCP formatter.
+tool results. `406` (Redmine's rejection code for a refused upload) maps to `RedmineValidationError`
+alongside `422`, since it carries the same `errors` envelope. Three error types sit outside this
+hierarchy at the edges: `ConfigError` (in `config/`) aborts startup before any Redmine call,
+`NotImplementedError` (extends `Error`, not `RedmineError`) marks the http-transport capability gap,
+and `FileAccessError` reports a refused local path. The first two are handled at their own layer; the
+formatter surfaces `FileAccessError`'s message verbatim, because it is written to be agent-facing and
+secret-free and the agent can only correct a path if it is told why it was refused.
 
 ### 9.3 Redmine query encoding
+
+### 9.4 Filesystem access
+
+Only the two attachment tools touch the local disk, and only through
+`application/file-access.ts`'s `resolveAllowedPath`, which validates a caller-supplied path against
+the `REDMINE_ALLOWED_DIRECTORIES` allowlist carried on the `ToolContext`. The guard **fails closed**
+(no configured roots ⇒ no file access), `realpath`s both the candidate and the roots *before* testing
+containment (so `..` and symlinks cannot escape), and compares on path-segment boundaries (so
+`/data/allowed-evil` does not satisfy `/data/allowed`). Downloads additionally reduce the
+Redmine-supplied filename to a bare basename — it is uploader-controlled data — and never overwrite
+an existing file. This is a security boundary, not a convenience check: without it, an agent that can
+be prompt-injected can exfiltrate or clobber arbitrary local files.
+
+### 9.5 Redmine query encoding
 
 `request-builder.ts` centralizes Redmine's query quirks: array filters are comma-joined
 (`status_id=1,2`), custom-field filters use `cf_<id>` keys, date filters accept operator prefixes
@@ -342,7 +385,7 @@ omits them on small responses).
 
 ## 10. Tool catalog
 
-The server exposes **10 intent-shaped tools**. Full per-tool reference lives under
+The server exposes **19 intent-shaped tools**. Full per-tool reference lives under
 [`tools/`](./tools/) (generated from the tool registry); the index is [`tools.md`](./tools.md).
 
 | Tool                        | Redmine endpoint(s)       | Kind  | Notes                                 |
@@ -351,16 +394,35 @@ The server exposes **10 intent-shaped tools**. Full per-tool reference lives und
 | `redmine_get_issue`         | `GET /issues/{id}.json`   | read  | `include` expansions                  |
 | `redmine_create_issue`      | `POST /issues.json`       | write | Returns the created issue             |
 | `redmine_update_issue`      | `PUT /issues/{id}.json`   | write | 204 → re-fetch & return updated issue |
+| `redmine_delete_issue`      | `DELETE /issues/{id}.json` | write · destructive | Permanent & cascading; own tool by ADR-0023 |
+| `redmine_manage_issue_watchers` | `POST`/`DELETE /issues/{id}/watchers` | write | One `action` enum over two endpoints |
+| `redmine_list_issue_relations` | `GET /issues/{id}/relations.json`, `GET /relations/{id}.json` | read | Issue's links, or one by relation id |
+| `redmine_create_issue_relation` | `POST /issues/{id}/relations.json` | write | Directional; Redmine derives the inverse |
+| `redmine_delete_issue_relation` | `DELETE /relations/{id}.json` | write · destructive | Keyed on the relation id; reversible |
 | `redmine_search`            | `GET /search.json`        | read  | Cross-entity free-text search         |
 | `redmine_list_projects`     | `GET /projects.json`      | read  | Pagination, `include`                 |
 | `redmine_get_project`       | `GET /projects/{id}.json` | read  | Accepts numeric id or identifier slug |
 | `redmine_list_time_entries` | `GET /time_entries.json`  | read  | Timesheet queries                     |
 | `redmine_create_time_entry` | `POST /time_entries.json` | write | `issue_id` xor `project_id` required  |
 | `redmine_get_current_user`  | `GET /users/current.json` | read  | "Who am I" + memberships/groups       |
+| `redmine_list_users`        | `GET /users.json`         | read  | Name → id lookup; admin-gated         |
+| `redmine_list_reference_data` | `/issue_statuses`, `/trackers`, `/enumerations/*` | read | One `kind` switch over five lookups |
+| `redmine_upload_attachment`   | `POST /uploads.json`      | write | Reads a local file (§9.4); returns a token |
+| `redmine_download_attachment` | `GET /attachments/{id}` + `/download/{id}/{name}` | write | Writes a local file (§9.4) |
 
 `redmine_update_issue` re-fetches the issue after a successful `PUT` (which returns `204 No Content`)
 and returns the resulting state, so an agent can confirm the outcome. Each tool sets MCP annotations
-(`readOnlyHint`, `destructiveHint`) so clients can reason about safety.
+(`readOnlyHint`, `destructiveHint`) so clients can reason about safety. Attaching a file is a
+deliberate two-step flow: `redmine_upload_attachment` returns a token that does nothing until it is
+passed in the `uploads` array of a create/update call. `redmine_download_attachment` changes nothing
+in Redmine but is *not* annotated read-only, because it writes to the local filesystem.
+`redmine_delete_issue` and `redmine_delete_issue_relation` are the tools carrying
+`destructiveHint: true`, deliberately kept out of `redmine_update_issue` and
+`redmine_create_issue_relation` (ADR-0023) so that hint stays meaningful; both set
+`idempotentHint: false`, since a repeated call fails with a not-found rather than no-opping. Their
+blast radius differs by an order of magnitude — deleting an issue is irreversible and cascading,
+deleting a relation drops one link that a single `redmine_create_issue_relation` call restores — and
+that nuance lives in the descriptions, not in the annotations (ADR-0024).
 
 ---
 

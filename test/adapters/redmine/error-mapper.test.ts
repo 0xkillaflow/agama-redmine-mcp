@@ -54,6 +54,20 @@ describe('mapHttpError', () => {
     expect(validation.message).toBe('Validation failed');
   });
 
+  it('maps 406 — a rejected upload — to a validation error carrying Redmine’s messages', () => {
+    // Redmine answers a refused upload (too large, disallowed type) with 406 and
+    // the standard errors envelope, so it is actionable input, not a transport fault.
+    const error = mapHttpError({
+      status: 406,
+      body: { errors: ['File is too large (maximum size is 5120 KB)'] },
+    });
+
+    expect(error).toBeInstanceOf(RedmineValidationError);
+    const validation = error as RedmineValidationError;
+    expect(validation.messages).toEqual(['File is too large (maximum size is 5120 KB)']);
+    expect(validation.status).toBe(406);
+  });
+
   it('maps 429 to a rate-limit error, reading Retry-After when present', () => {
     const error = mapHttpError({
       status: 429,

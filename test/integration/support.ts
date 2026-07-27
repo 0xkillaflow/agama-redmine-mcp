@@ -41,9 +41,14 @@ export function realRedmineClient(): RedmineClient {
   });
 }
 
-/** Connect the in-memory MCP client to the real HTTP client. */
-export function connectRealMcp(): Promise<InMemoryMcp> {
-  return connectInMemoryMcp({ redmine: realRedmineClient() });
+/**
+ * Connect the in-memory MCP client to the real HTTP client.
+ *
+ * @param allowedDirectories - Filesystem allowlist for the attachment tools
+ * (defaults to empty, i.e. no local file access).
+ */
+export function connectRealMcp(allowedDirectories: readonly string[] = []): Promise<InMemoryMcp> {
+  return connectInMemoryMcp({ redmine: realRedmineClient(), allowedDirectories });
 }
 
 /**

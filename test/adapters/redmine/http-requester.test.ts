@@ -4,7 +4,7 @@ import {
   type HttpErrorContext,
   type HttpRequesterOptions,
 } from '../../../src/adapters/redmine/http-requester.js';
-import { RedmineTransportError } from '../../../src/domain/errors/index.js';
+import { RedmineNotFoundError, RedmineTransportError } from '../../../src/domain/errors/index.js';
 import type { Logger, LogMeta } from '../../../src/domain/ports/index.js';
 
 /** A logger that records every emitted record for later inspection. */
@@ -91,6 +91,33 @@ describe('createHttpRequester', () => {
     await expect(requester.put('/issues/1.json', { subject: 'x' })).resolves.toBeUndefined();
   });
 
+  it('issues a DELETE with the API key and no body, resolving undefined on 204', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    const { requester } = build();
+
+    await expect(requester.del('/issues/42.json')).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls[0] as [
+      string,
+      RequestInit & { headers: Record<string, string> },
+    ];
+    expect(url).toBe('https://redmine.example.com/issues/42.json');
+    expect(init.method).toBe('DELETE');
+    expect(init.headers['X-Redmine-API-Key']).toBe(API_KEY);
+    expect(init.body).toBeUndefined();
+  });
+
+  it('routes a 404 DELETE through the error mapper', async () => {
+    fetchMock.mockResolvedValue(new Response('{}', { status: 404 }));
+    const mapError = vi.fn((): never => {
+      throw new RedmineNotFoundError();
+    });
+    const { requester } = build({ mapError });
+
+    await expect(requester.del('/issues/999.json')).rejects.toBeInstanceOf(RedmineNotFoundError);
+    expect(mapError).toHaveBeenCalledWith({ status: 404, body: {} });
+  });
+
   it('sends the API key and JSON headers, and serializes the body', async () => {
     fetchMock.mockResolvedValue(new Response('{}', { status: 201 }));
     const { requester } = build();
@@ -149,6 +176,96 @@ describe('createHttpRequester', () => {
     const { requester } = build();
 
     await expect(requester.get('/issues.json')).rejects.toBeInstanceOf(RedmineTransportError);
+  });
+
+  describe('postBinary', () => {
+    it('sends raw bytes as octet-stream with the API key and filename query', async () => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ upload: { id: 7, token: 'tok' } }), { status: 201 }),
+      );
+      const { requester } = build();
+      const bytes = new Uint8Array([0x00, 0xff, 0x10, 0x42]);
+
+      const result = await requester.postBinary('/uploads.json', bytes, 'filename=log.txt');
+
+      expect(fetchMock.mock.calls[0]?.[0]).toBe(
+        'https://redmine.example.com/uploads.json?filename=log.txt',
+      );
+      const init = fetchMock.mock.calls[0]?.[1] as RequestInit & {
+        headers: Record<string, string>;
+      };
+      expect(init.headers['Content-Type']).toBe('application/octet-stream');
+      expect(init.headers['X-Redmine-API-Key']).toBe(API_KEY);
+      // The exact bytes, not a JSON-stringified view of them.
+      expect(init.body).toBe(bytes);
+      expect(result).toEqual({ upload: { id: 7, token: 'tok' } });
+    });
+
+    it('does not leave the JSON verbs sending octet-stream', async () => {
+      // A fresh Response per call: a body can only be read once.
+      fetchMock.mockImplementation(() => Promise.resolve(new Response('{}', { status: 201 })));
+      const { requester } = build();
+
+      await requester.postBinary('/uploads.json', new Uint8Array([1]));
+      await requester.post('/issues.json', { subject: 'hi' });
+
+      const init = fetchMock.mock.calls[1]?.[1] as RequestInit & {
+        headers: Record<string, string>;
+      };
+      expect(init.headers['Content-Type']).toBe('application/json');
+    });
+
+    it('never logs the request body', async () => {
+      fetchMock.mockResolvedValue(new Response('{}', { status: 201 }));
+      const { requester, records } = build();
+
+      await requester.postBinary('/uploads.json', new TextEncoder().encode('top secret payload'));
+
+      expect(JSON.stringify(records)).not.toContain('top secret');
+    });
+  });
+
+  describe('getBinary', () => {
+    it('returns the exact bytes and content type, sending Accept: */*', async () => {
+      const payload = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+      fetchMock.mockResolvedValue(
+        new Response(payload, { status: 200, headers: { 'content-type': 'image/png' } }),
+      );
+      const { requester } = build();
+
+      const result = await requester.getBinary('/attachments/download/7/logo.png');
+
+      expect(Array.from(result.bytes)).toEqual(Array.from(payload));
+      expect(result.contentType).toBe('image/png');
+      const init = fetchMock.mock.calls[0]?.[1] as RequestInit & {
+        headers: Record<string, string>;
+      };
+      expect(init.headers['Accept']).toBe('*/*');
+      expect(init.headers['X-Redmine-API-Key']).toBe(API_KEY);
+    });
+
+    it('does not attempt a JSON decode of a non-JSON body', async () => {
+      // Binary content is not valid JSON; the JSON verbs would raise here.
+      fetchMock.mockResolvedValue(new Response(new Uint8Array([0x00, 0x01]), { status: 200 }));
+      const { requester } = build();
+
+      const result = await requester.getBinary('/attachments/download/7/blob.bin');
+
+      expect(Array.from(result.bytes)).toEqual([0x00, 0x01]);
+    });
+
+    it('routes a 404 through the injected error mapper', async () => {
+      fetchMock.mockResolvedValue(new Response('not found', { status: 404 }));
+      const mapError = vi.fn((): never => {
+        throw new RedmineNotFoundError();
+      });
+      const { requester } = build({ mapError });
+
+      await expect(requester.getBinary('/attachments/download/9/x.bin')).rejects.toBeInstanceOf(
+        RedmineNotFoundError,
+      );
+      expect(mapError).toHaveBeenCalledWith({ status: 404, body: 'not found' });
+    });
   });
 
   it('logs the request without leaking the API key', async () => {

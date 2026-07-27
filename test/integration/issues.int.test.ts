@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import {
   connectRealMcp,
   expectStructured,
@@ -16,6 +17,12 @@ interface IssueSummary {
 
 interface IssueDetail extends IssueSummary {
   journals?: Array<{ notes: string }>;
+  watchers?: Array<{ id: number }>;
+}
+
+/** Join a tool result's text blocks, used to inspect a formatted error. */
+function errorText(result: CallToolResult): string {
+  return result.content.map((block) => (block.type === 'text' ? block.text : '')).join(' ');
 }
 
 /** Full issue lifecycle: create → get round-trip, then update (status + note). */
@@ -92,5 +99,67 @@ describe.skipIf(!runIntegration)('integration: issues', () => {
     );
     const notes = (withJournals.journals ?? []).map((j) => j.notes);
     expect(notes).toContain(note);
+  });
+
+  it('deletes an issue it created, after which reading it back fails', async () => {
+    // Create-then-delete is the only acceptable pattern here: the suite must
+    // never delete an issue it did not make itself.
+    const created = expectStructured<IssueSummary>(
+      await mcp.callTool('redmine_create_issue', {
+        project_id: projectId,
+        tracker_id: trackerId,
+        subject: `MCP delete ${Date.now()}`,
+      }),
+    );
+
+    const deleted = expectStructured<{ deleted: boolean; issue_id: number }>(
+      await mcp.callTool('redmine_delete_issue', { issue_id: created.id }),
+    );
+    expect(deleted).toEqual({ deleted: true, issue_id: created.id });
+
+    const afterwards = await mcp.callTool('redmine_get_issue', { issue_id: created.id });
+    expect(afterwards.isError).toBe(true);
+    expect(errorText(afterwards)).toMatch(/not found/i);
+  });
+
+  it('adds then removes a watcher on an issue it created', async () => {
+    const me = expectStructured<{ id: number }>(await mcp.callTool('redmine_get_current_user', {}));
+    const created = expectStructured<IssueSummary>(
+      await mcp.callTool('redmine_create_issue', {
+        project_id: projectId,
+        tracker_id: trackerId,
+        subject: `MCP watcher ${Date.now()}`,
+      }),
+    );
+
+    const added = await mcp.callTool('redmine_manage_issue_watchers', {
+      issue_id: created.id,
+      user_id: me.id,
+      action: 'add',
+    });
+    // Managing watchers needs its own Redmine permission; a key without it is a
+    // legitimate configuration, not a suite failure.
+    if (added.isError === true) {
+      expect(errorText(added)).toMatch(/permission/i);
+      return;
+    }
+
+    const watching = expectStructured<IssueDetail>(
+      await mcp.callTool('redmine_get_issue', { issue_id: created.id, include: ['watchers'] }),
+    );
+    expect((watching.watchers ?? []).map((w) => w.id)).toContain(me.id);
+
+    expectStructured(
+      await mcp.callTool('redmine_manage_issue_watchers', {
+        issue_id: created.id,
+        user_id: me.id,
+        action: 'remove',
+      }),
+    );
+
+    const notWatching = expectStructured<IssueDetail>(
+      await mcp.callTool('redmine_get_issue', { issue_id: created.id, include: ['watchers'] }),
+    );
+    expect((notWatching.watchers ?? []).map((w) => w.id)).not.toContain(me.id);
   });
 });

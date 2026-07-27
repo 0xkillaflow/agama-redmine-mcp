@@ -2,9 +2,11 @@
  * The Redmine HTTP requester.
  *
  * A minimal, credential-bound `fetch` wrapper: it joins the base URL, sets the
- * auth and JSON headers, applies a timeout via `AbortController`, and decodes
- * the response. It is deliberately free of resource knowledge (no issue/project
- * specifics) — resource clients build paths and queries and feed them here.
+ * auth header and the per-verb content negotiation, applies a timeout via
+ * `AbortController`, and decodes the response. It is deliberately free of
+ * resource knowledge (no issue/project specifics) — resource clients build paths
+ * and queries and feed them here. Headers are assembled per request rather than
+ * shared and mutated, so the binary verbs cannot affect the JSON ones.
  *
  * On failure it stays out of the policy business: network/timeout problems
  * become a {@link RedmineTransportError}, and any non-2xx response is handed to
@@ -46,18 +48,41 @@ export interface HttpRequesterOptions {
   readonly mapError: HttpErrorMapper;
 }
 
+/** A raw (non-JSON) response body, as returned by {@link HttpRequester.getBinary}. */
+export interface BinaryResponse {
+  /** The response body's exact bytes. */
+  readonly bytes: Uint8Array;
+  /** The `Content-Type` header, when the response carried one. */
+  readonly contentType?: string;
+}
+
 /**
- * The low-level Redmine transport. Each method returns the parsed JSON body
+ * The low-level Redmine transport. The JSON verbs return the parsed body
  * (`unknown`) for a 2xx response that has one, or `undefined` for `204 No
  * Content`. Paths are given by resource clients (e.g. `/issues.json`); `query`
  * is an already-serialized query string (see the request builder).
+ *
+ * The two binary verbs exist for Redmine's attachment endpoints, which are the
+ * only ones that are not JSON in both directions: `/uploads.json` takes a raw
+ * `application/octet-stream` body, and `/attachments/download/…` returns raw
+ * bytes with no envelope.
  */
 export interface HttpRequester {
   get(path: string, query?: string): Promise<unknown>;
   post(path: string, body?: unknown): Promise<unknown>;
   put(path: string, body?: unknown): Promise<unknown>;
   del(path: string): Promise<unknown>;
+  /** POST raw bytes as `application/octet-stream`; the response is JSON. */
+  postBinary(path: string, body: Uint8Array, query?: string): Promise<unknown>;
+  /** GET a raw body; nothing is JSON-decoded. */
+  getBinary(path: string, query?: string): Promise<BinaryResponse>;
 }
+
+/**
+ * The two body forms this requester ever sends: a serialized JSON string, or the
+ * raw bytes of an upload.
+ */
+type RequestBody = string | Uint8Array;
 
 /** Join a base URL and a path, tolerating a trailing/leading slash on either. */
 function joinUrl(baseUrl: string, path: string): string {
@@ -107,18 +132,29 @@ export function createHttpRequester(options: HttpRequesterOptions): HttpRequeste
   const { baseUrl, credentials, timeoutMs, logger, mapError } = options;
 
   // Auth header carries the credential value for both `apiKey` and `bearer`
-  // kinds — Redmine accepts an API key or a user token here.
-  const headers: Record<string, string> = {
+  // kinds — Redmine accepts an API key or a user token here. Every request
+  // *copies* this into its own header set: the binary verbs need different
+  // content negotiation, and mutating one shared object would leak that across
+  // requests.
+  const authHeader: Readonly<Record<string, string>> = {
     'X-Redmine-API-Key': credentials.value,
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
   };
 
-  async function request(
+  /**
+   * Issue one request and return the raw {@link Response} for a 2xx result.
+   * Owns everything shared by all verbs — URL join, timeout, network-error
+   * translation, outcome logging, and non-2xx mapping — and decides nothing
+   * about how the body is encoded or decoded. Request bodies are never logged.
+   */
+  async function send(
     method: string,
     path: string,
-    init: { query?: string | undefined; body?: unknown } = {},
-  ): Promise<unknown> {
+    init: {
+      query?: string | undefined;
+      body?: RequestBody | undefined;
+      headers: Readonly<Record<string, string>>;
+    },
+  ): Promise<Response> {
     const target = joinUrl(baseUrl, path);
     const url = init.query ? `${target}?${init.query}` : target;
 
@@ -130,9 +166,9 @@ export function createHttpRequester(options: HttpRequesterOptions): HttpRequeste
     try {
       response = await fetch(url, {
         method,
-        headers,
+        headers: init.headers,
         signal: controller.signal,
-        ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
+        ...(init.body !== undefined ? { body: init.body } : {}),
       });
     } catch (cause) {
       // An aborted signal means we hit the timeout; anything else is a network
@@ -157,14 +193,57 @@ export function createHttpRequester(options: HttpRequesterOptions): HttpRequeste
       mapError({ status: response.status, body: await readErrorBody(response) });
     }
 
+    return response;
+  }
+
+  /** A JSON request/response round trip: the default for every Redmine endpoint. */
+  async function requestJson(
+    method: string,
+    path: string,
+    init: { query?: string | undefined; body?: unknown } = {},
+  ): Promise<unknown> {
+    const response = await send(method, path, {
+      query: init.query,
+      headers: { ...authHeader, 'Content-Type': 'application/json', Accept: 'application/json' },
+      ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
+    });
+
     if (response.status === 204) return undefined;
     return readJsonBody(response);
   }
 
   return {
-    get: (path, query) => request('GET', path, { query }),
-    post: (path, body) => request('POST', path, { body }),
-    put: (path, body) => request('PUT', path, { body }),
-    del: (path) => request('DELETE', path),
+    get: (path, query) => requestJson('GET', path, { query }),
+    post: (path, body) => requestJson('POST', path, { body }),
+    put: (path, body) => requestJson('PUT', path, { body }),
+    del: (path) => requestJson('DELETE', path),
+
+    // Raw upload: the body goes out verbatim as octet-stream (overriding the
+    // JSON content type), while the response is still Redmine's JSON envelope.
+    postBinary: async (path, body, query) => {
+      const response = await send('POST', path, {
+        query,
+        body,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/octet-stream',
+          Accept: 'application/json',
+        },
+      });
+      if (response.status === 204) return undefined;
+      return readJsonBody(response);
+    },
+
+    // Raw download: `Accept: */*` because an attachment is any media type, and
+    // no JSON decode — the body is the file.
+    getBinary: async (path, query) => {
+      const response = await send('GET', path, {
+        query,
+        headers: { ...authHeader, Accept: '*/*' },
+      });
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const contentType = response.headers.get('content-type');
+      return contentType !== null ? { bytes, contentType } : { bytes };
+    },
   };
 }

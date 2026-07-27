@@ -59,5 +59,23 @@ export function createIssuesResource(http: HttpRequester): IssuesResource {
       // re-fetches the issue when it needs the updated representation.
       await http.put(`/issues/${id}.json`, { issue: input });
     },
+
+    async delete(id: number): Promise<void> {
+      // Redmine answers a successful delete with `204 No Content`. A missing
+      // issue is a `404` and a permission failure a `403`, both already turned
+      // into domain errors by the requester's mapper.
+      await http.del(`/issues/${id}.json`);
+    },
+
+    async addWatcher(issueId: number, userId: number): Promise<void> {
+      // The watcher endpoint takes a *bare* `{ user_id }` — unlike issues or
+      // time entries, there is no named envelope here. `204 No Content` on success.
+      await http.post(`/issues/${issueId}/watchers.json`, { user_id: userId });
+    },
+
+    async removeWatcher(issueId: number, userId: number): Promise<void> {
+      // The user id travels in the path, not a body. `204 No Content` on success.
+      await http.del(`/issues/${issueId}/watchers/${userId}.json`);
+    },
   };
 }

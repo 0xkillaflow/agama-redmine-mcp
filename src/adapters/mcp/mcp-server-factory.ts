@@ -32,6 +32,11 @@ export interface CreateMcpServerDeps {
   readonly logger: Logger;
   /** Server name/version advertised in the MCP handshake. */
   readonly serverInfo: ServerInfo;
+  /**
+   * Filesystem allowlist shared by every tool (`REDMINE_ALLOWED_DIRECTORIES`).
+   * Omitted ⇒ empty ⇒ the attachment tools refuse every path.
+   */
+  readonly allowedDirectories?: readonly string[];
 }
 
 /**
@@ -43,6 +48,7 @@ export interface CreateMcpServerDeps {
  */
 export function createMcpServer(deps: CreateMcpServerDeps): McpServer {
   const { registry, credentialProvider, clientFactory, logger, serverInfo } = deps;
+  const allowedDirectories = deps.allowedDirectories ?? [];
 
   const tools = registry.list();
   if (tools.length === 0) {
@@ -55,7 +61,7 @@ export function createMcpServer(deps: CreateMcpServerDeps): McpServer {
   );
 
   for (const def of tools) {
-    registerTool(server, def, { credentialProvider, clientFactory, logger });
+    registerTool(server, def, { credentialProvider, clientFactory, logger, allowedDirectories });
   }
 
   return server;

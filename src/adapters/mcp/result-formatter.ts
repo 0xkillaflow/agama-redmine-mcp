@@ -8,12 +8,15 @@
  *
  * Error mapping is agent-facing: each {@link RedmineError} subtype yields a
  * clear, actionable message. Unknown errors collapse to a generic message so no
- * stack trace or secret ever leaks to the client.
+ * stack trace or secret ever leaks to the client. {@link FileAccessError} is the
+ * one non-Redmine error handled here, because a refused local path is something
+ * the agent is expected to correct.
  */
 
 import { ZodError } from 'zod';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import {
+  FileAccessError,
   RedmineAuthError,
   RedmineForbiddenError,
   RedmineNotFoundError,
@@ -81,6 +84,12 @@ function mentionsBlankProject(messages: readonly string[]): boolean {
 function errorMessage(err: unknown): string {
   if (err instanceof ZodError) {
     return inputErrorMessage(err);
+  }
+  if (err instanceof FileAccessError) {
+    // Surfaced verbatim: the guard's message is written to be agent-facing and
+    // secret-free, and the agent can only correct the path if it is told why the
+    // path was refused.
+    return err.message;
   }
   if (err instanceof RedmineAuthError) {
     return 'Authentication with Redmine failed. Verify the configured API key or bearer token.';

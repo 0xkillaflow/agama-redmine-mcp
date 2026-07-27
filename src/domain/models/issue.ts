@@ -6,6 +6,7 @@ import {
   IdNameSchema,
   IssueStatusRefSchema,
 } from './common.js';
+import { IssueRelationSchema } from './issue-relation.js';
 
 /**
  * Wire models for Redmine issues (schemas + inferred types). These mirror what
@@ -64,15 +65,6 @@ const IssueChildSchema = z.object({
   id: z.number(),
   tracker: IdNameSchema,
   subject: z.string(),
-});
-
-/** An issue relation (returned under `include=relations`). */
-const IssueRelationSchema = z.object({
-  id: z.number(),
-  issue_id: z.number(),
-  issue_to_id: z.number(),
-  relation_type: z.string(),
-  delay: z.number().nullable(),
 });
 
 /** A single change recorded in a journal entry's `details` array. */

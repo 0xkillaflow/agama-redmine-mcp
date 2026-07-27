@@ -1,0 +1,10 @@
+{
+  "id": 7,
+  "filename": "deploy log.txt",
+  "filesize": 1024,
+  "content_type": "text/plain",
+  "description": "Deployment output",
+  "content_url": "https://redmine.example.com/attachments/download/7/deploy%20log.txt",
+  "author": { "id": 7, "name": "Jane Dev" },
+  "created_on": "2026-07-02T11:00:00Z"
+}
