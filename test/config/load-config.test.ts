@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { delimiter, resolve } from 'node:path';
 import { loadConfig, ConfigError } from '../../src/config/index.js';
 
 /** A minimal valid stdio environment; individual tests override fields. */
@@ -16,9 +17,40 @@ describe('loadConfig', () => {
       REDMINE_API_KEY: 'secret-key',
       MCP_TRANSPORT: 'stdio',
       REDMINE_TIMEOUT_MS: 30000,
+      REDMINE_ALLOWED_DIRECTORIES: [],
       LOG_LEVEL: 'info',
       HTTP_PORT: 3000,
     });
+  });
+
+  it('defaults REDMINE_ALLOWED_DIRECTORIES to an empty list (no file access)', () => {
+    // Fail closed: an absent allowlist must never mean "anything goes".
+    expect(loadConfig(baseEnv).REDMINE_ALLOWED_DIRECTORIES).toEqual([]);
+    expect(
+      loadConfig({ ...baseEnv, REDMINE_ALLOWED_DIRECTORIES: '' }).REDMINE_ALLOWED_DIRECTORIES,
+    ).toEqual([]);
+  });
+
+  it('splits REDMINE_ALLOWED_DIRECTORIES on the platform delimiter and normalizes entries', () => {
+    const raw = ['/data/uploads/', ' /data/reports '].join(delimiter);
+
+    const config = loadConfig({ ...baseEnv, REDMINE_ALLOWED_DIRECTORIES: raw });
+
+    expect(config.REDMINE_ALLOWED_DIRECTORIES).toEqual([
+      resolve('/data/uploads'),
+      resolve('/data/reports'),
+    ]);
+  });
+
+  it('rejects a relative entry in REDMINE_ALLOWED_DIRECTORIES', () => {
+    try {
+      loadConfig({ ...baseEnv, REDMINE_ALLOWED_DIRECTORIES: './uploads' });
+      expect.unreachable('expected ConfigError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ConfigError);
+      const issues = (err as ConfigError).issues;
+      expect(issues.some((line) => line.startsWith('REDMINE_ALLOWED_DIRECTORIES:'))).toBe(true);
+    }
   });
 
   it('throws ConfigError listing REDMINE_URL when it is missing', () => {

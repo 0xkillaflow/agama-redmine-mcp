@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createIssuesResource } from '../../../../src/adapters/redmine/resources/issues.js';
 import {
+  RedmineForbiddenError,
+  RedmineNotFoundError,
   RedmineTransportError,
   RedmineValidationError,
 } from '../../../../src/domain/errors/index.js';
@@ -89,6 +91,54 @@ describe('createIssuesResource', () => {
 
     expect(put).toHaveBeenCalledWith('/issues/42.json', { issue: { subject: 'Renamed' } });
     expect(result).toBeUndefined();
+  });
+
+  it('delete hits DELETE /issues/{id}.json and resolves void on 204', async () => {
+    const { http, del } = mockHttp();
+    del.mockResolvedValue(undefined);
+    const issues = createIssuesResource(http);
+
+    const result = await issues.delete(42);
+
+    expect(del).toHaveBeenCalledWith('/issues/42.json');
+    expect(result).toBeUndefined();
+  });
+
+  it('propagates a not-found error raised by the requester on a delete', async () => {
+    const { http, del } = mockHttp();
+    del.mockRejectedValue(new RedmineNotFoundError());
+    const issues = createIssuesResource(http);
+
+    await expect(issues.delete(999)).rejects.toBeInstanceOf(RedmineNotFoundError);
+  });
+
+  it('addWatcher POSTs a bare { user_id } body — no named envelope', async () => {
+    const { http, post } = mockHttp();
+    post.mockResolvedValue(undefined);
+    const issues = createIssuesResource(http);
+
+    await issues.addWatcher(42, 7);
+
+    expect(post).toHaveBeenCalledWith('/issues/42/watchers.json', { user_id: 7 });
+  });
+
+  it('removeWatcher hits DELETE /issues/{id}/watchers/{user_id}.json', async () => {
+    const { http, del } = mockHttp();
+    del.mockResolvedValue(undefined);
+    const issues = createIssuesResource(http);
+
+    await issues.removeWatcher(42, 7);
+
+    expect(del).toHaveBeenCalledWith('/issues/42/watchers/7.json');
+  });
+
+  it('propagates a forbidden error raised by the requester on a watcher change', async () => {
+    const { http, post } = mockHttp();
+    post.mockRejectedValue(new RedmineForbiddenError());
+    const issues = createIssuesResource(http);
+
+    // Managing watchers needs a distinct permission, so a 403 is the common case.
+    await expect(issues.addWatcher(42, 7)).rejects.toBeInstanceOf(RedmineForbiddenError);
   });
 
   it('turns a schema-mismatched body into a transport error', async () => {

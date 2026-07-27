@@ -12,35 +12,48 @@
  */
 
 import type {
+  AttachmentRef,
   CreateIssueInput,
+  CreateIssueRelationInput,
   CreateTimeEntryInput,
   CurrentUserInclude,
   Issue,
   IssueInclude,
+  IssueRelation,
   IssueSimple,
   ListIssuesParams,
   ListProjectsParams,
   ListTimeEntriesParams,
+  ListUsersParams,
   Paginated,
   Project,
   ProjectInclude,
   ProjectRef,
   ProjectSimple,
+  ReferenceData,
+  ReferenceDataKind,
   SearchParams,
   SearchResult,
   TimeEntry,
   UpdateIssueInput,
+  UploadFileInput,
+  UploadResult,
   User,
+  UserSimple,
 } from '../../src/domain/models/index.js';
 import type { RedmineClient } from '../../src/domain/ports/index.js';
 import {
+  attachmentFixture,
   issueFixture,
+  issueRelationFixture,
   issueSimpleFixture,
   projectFixture,
   projectSimpleFixture,
+  referenceStatusesFixture,
   searchResultsPage,
   timeEntryFixture,
   userFixture,
+  userSimpleFixture,
 } from './fixtures/index.js';
 
 /**
@@ -111,6 +124,15 @@ export interface FakeRedmineClient extends RedmineClient {
     get: RecordingFn<[number, IssueInclude[]?], Issue>;
     create: RecordingFn<[CreateIssueInput], IssueSimple>;
     update: RecordingFn<[number, UpdateIssueInput], void>;
+    delete: RecordingFn<[number], void>;
+    addWatcher: RecordingFn<[number, number], void>;
+    removeWatcher: RecordingFn<[number, number], void>;
+  };
+  readonly issueRelations: {
+    listForIssue: RecordingFn<[number], readonly IssueRelation[]>;
+    get: RecordingFn<[number], IssueRelation>;
+    create: RecordingFn<[number, CreateIssueRelationInput], IssueRelation>;
+    delete: RecordingFn<[number], void>;
   };
   readonly projects: {
     list: RecordingFn<[ListProjectsParams], Paginated<ProjectSimple>>;
@@ -122,9 +144,18 @@ export interface FakeRedmineClient extends RedmineClient {
   };
   readonly users: {
     getCurrent: RecordingFn<[CurrentUserInclude[]?], User>;
+    list: RecordingFn<[ListUsersParams], Paginated<UserSimple>>;
   };
   readonly search: {
     search: RecordingFn<[SearchParams], Paginated<SearchResult>>;
+  };
+  readonly referenceData: {
+    list: RecordingFn<[ReferenceDataKind], ReferenceData>;
+  };
+  readonly attachments: {
+    upload: RecordingFn<[UploadFileInput], UploadResult>;
+    get: RecordingFn<[number], AttachmentRef>;
+    download: RecordingFn<[number, string], Uint8Array>;
   };
 }
 
@@ -142,6 +173,17 @@ export function fakeRedmineClient(): FakeRedmineClient {
       get: recording<[number, IssueInclude[]?], Issue>(() => issueFixture),
       create: recording<[CreateIssueInput], IssueSimple>(() => issueSimpleFixture),
       update: recording<[number, UpdateIssueInput], void>(() => undefined),
+      delete: recording<[number], void>(() => undefined),
+      addWatcher: recording<[number, number], void>(() => undefined),
+      removeWatcher: recording<[number, number], void>(() => undefined),
+    },
+    issueRelations: {
+      listForIssue: recording<[number], readonly IssueRelation[]>(() => [issueRelationFixture]),
+      get: recording<[number], IssueRelation>(() => issueRelationFixture),
+      create: recording<[number, CreateIssueRelationInput], IssueRelation>(
+        () => issueRelationFixture,
+      ),
+      delete: recording<[number], void>(() => undefined),
     },
     projects: {
       list: recording<[ListProjectsParams], Paginated<ProjectSimple>>(() =>
@@ -157,9 +199,25 @@ export function fakeRedmineClient(): FakeRedmineClient {
     },
     users: {
       getCurrent: recording<[CurrentUserInclude[]?], User>(() => userFixture),
+      list: recording<[ListUsersParams], Paginated<UserSimple>>(() => page([userSimpleFixture])),
     },
     search: {
       search: recording<[SearchParams], Paginated<SearchResult>>(() => searchResultsPage),
+    },
+    referenceData: {
+      list: recording<[ReferenceDataKind], ReferenceData>(() => referenceStatusesFixture),
+    },
+    attachments: {
+      // Bytes in, bytes out: the fake never touches the filesystem, mirroring the
+      // port's contract.
+      upload: recording<[UploadFileInput], UploadResult>(() => ({
+        id: 7,
+        token: '7.ec9b1f0e3d5a8e4c',
+      })),
+      get: recording<[number], AttachmentRef>(() => attachmentFixture),
+      download: recording<[number, string], Uint8Array>(() =>
+        new TextEncoder().encode('attachment contents'),
+      ),
     },
   };
 }

@@ -1,13 +1,15 @@
 import { vi } from 'vitest';
 import type { HttpRequester } from '../../../../src/adapters/redmine/http-requester.js';
 
-/** A fully-mocked {@link HttpRequester} with the four verbs as spies. */
+/** A fully-mocked {@link HttpRequester} with every verb as a spy. */
 export interface MockHttp {
   readonly http: HttpRequester;
   readonly get: ReturnType<typeof vi.fn>;
   readonly post: ReturnType<typeof vi.fn>;
   readonly put: ReturnType<typeof vi.fn>;
   readonly del: ReturnType<typeof vi.fn>;
+  readonly postBinary: ReturnType<typeof vi.fn>;
+  readonly getBinary: ReturnType<typeof vi.fn>;
 }
 
 /** Build a mocked requester; each verb resolves `undefined` until configured. */
@@ -16,7 +18,17 @@ export function mockHttp(): MockHttp {
   const post = vi.fn();
   const put = vi.fn();
   const del = vi.fn();
-  return { http: { get, post, put, del }, get, post, put, del };
+  const postBinary = vi.fn();
+  const getBinary = vi.fn();
+  return {
+    http: { get, post, put, del, postBinary, getBinary },
+    get,
+    post,
+    put,
+    del,
+    postBinary,
+    getBinary,
+  };
 }
 
 /** A minimal, schema-valid `issue.simple` fixture (OpenAPI-derived shape). */

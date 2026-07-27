@@ -26,7 +26,7 @@ docs              →  regenerate the tool reference
 ## Step 1 — Confirm the endpoint
 
 Find the operation in [`../openapi/`](../openapi/) (grouped by area, e.g.
-`redmine-other.yaml` for users) and confirm the request parameters and response shape. Note the JSON
+`redmine-users.yaml` for users) and confirm the request parameters and response shape. Note the JSON
 envelope key — Redmine wraps collections as `{ "users": [...], "total_count": N, "offset": …,
 "limit": … }` and singletons as `{ "user": {...} }` — you need it when parsing.
 
@@ -39,21 +39,25 @@ failure surfaces as a `RedmineTransportError`, so only require fields you truly 
 
 ```ts
 // src/domain/models/user.ts (extend the existing file)
+// Only `id` is required: Redmine hides identity fields from non-admin callers,
+// and requiring them would turn a permission difference into a parse failure.
 export const UserSimpleSchema = z.object({
-  id: z.number().int(),
-  login: z.string(),
-  firstname: z.string(),
-  lastname: z.string(),
+  id: z.number(),
+  login: z.string().optional(),
+  firstname: z.string().optional(),
+  lastname: z.string().optional(),
 });
 export type UserSimple = z.infer<typeof UserSimpleSchema>;
 
-// params object the tool passes down (mirror the filters you expose)
+// params object the tool passes down (mirror the filters you expose).
+// Optional members spell out `| undefined`: `exactOptionalPropertyTypes` is on,
+// and a tool hands down Zod-inferred input whose optional fields carry it.
 export interface ListUsersParams {
-  status?: number;
-  name?: string;
-  group_id?: number;
-  offset?: number;
-  limit?: number;
+  readonly status?: number | undefined;
+  readonly name?: string | undefined;
+  readonly group_id?: number | undefined;
+  readonly offset?: number | undefined;
+  readonly limit?: number | undefined;
 }
 ```
 

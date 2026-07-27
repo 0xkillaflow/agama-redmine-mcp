@@ -18,10 +18,18 @@ import type { Logger, RedmineClient } from '../domain/ports/index.js';
  * The collaborators a tool handler receives per call. `redmine` is already
  * authenticated for this request (the MCP adapter resolves credentials and binds
  * the client before invoking the handler); `logger` is scoped to the tool.
+ *
+ * `allowedDirectories` is the filesystem allowlist the attachment tools must
+ * validate every caller-supplied path against (see
+ * {@link ../application/file-access.ts}). It is carried on the context rather
+ * than read from the environment because tool definitions are module-level
+ * constants: configuration can only reach a handler at call time. An empty list
+ * — the default — means no local file access at all.
  */
 export interface ToolContext {
   readonly redmine: RedmineClient;
   readonly logger: Logger;
+  readonly allowedDirectories: readonly string[];
 }
 
 /**

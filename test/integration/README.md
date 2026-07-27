@@ -46,13 +46,15 @@ The credentials land in `test/integration/redmine.env` (git-ignored):
 
 ## What the tests cover
 
-| File                       | Behaviour                                                                                        |
-| -------------------------- | ------------------------------------------------------------------------------------------------ |
-| `users.int.test.ts`        | `get_current_user` returns the seeded admin.                                                     |
-| `issues.int.test.ts`       | `create_issue` → `get_issue` round-trip; `update_issue` changes status + adds a note (ADR-0011). |
-| `time-entries.int.test.ts` | `create_time_entry` on a created issue; `list_time_entries` finds it.                            |
-| `projects.int.test.ts`     | `list_projects` / `get_project` on the seeded project.                                           |
-| `search.int.test.ts`       | `search` finds a created issue by a unique subject token.                                        |
+| File                         | Behaviour                                                                                          |
+| ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| `users.int.test.ts`          | `get_current_user` returns the seeded admin; `list_users` finds it (tolerating a 403).             |
+| `reference-data.int.test.ts` | `list_reference_data` returns each of the five kinds.                                              |
+| `issues.int.test.ts`         | `create_issue` → `get_issue` round-trip; `update_issue` changes status + adds a note (ADR-0011).   |
+| `time-entries.int.test.ts`   | `create_time_entry` on a created issue; `list_time_entries` finds it.                              |
+| `projects.int.test.ts`       | `list_projects` / `get_project` on the seeded project.                                             |
+| `search.int.test.ts`         | `search` finds a created issue by a unique subject token.                                          |
+| `attachments.int.test.ts`    | Upload → attach to an issue → download round-trip (byte-for-byte); allowlist and overwrite guards. |
 
 Tests scope their data to the seeded project and use unique subjects/comments per
 run, so re-runs don't collide.

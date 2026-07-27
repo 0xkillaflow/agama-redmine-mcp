@@ -14,6 +14,15 @@ export interface FakeRedmineClient extends RedmineClient {
     get: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+    addWatcher: ReturnType<typeof vi.fn>;
+    removeWatcher: ReturnType<typeof vi.fn>;
+  };
+  readonly issueRelations: {
+    listForIssue: ReturnType<typeof vi.fn>;
+    get: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
   };
   readonly projects: {
     list: ReturnType<typeof vi.fn>;
@@ -23,18 +32,38 @@ export interface FakeRedmineClient extends RedmineClient {
     list: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
   };
-  readonly users: { getCurrent: ReturnType<typeof vi.fn> };
+  readonly users: {
+    getCurrent: ReturnType<typeof vi.fn>;
+    list: ReturnType<typeof vi.fn>;
+  };
   readonly search: { search: ReturnType<typeof vi.fn> };
+  readonly referenceData: { list: ReturnType<typeof vi.fn> };
+  readonly attachments: {
+    upload: ReturnType<typeof vi.fn>;
+    get: ReturnType<typeof vi.fn>;
+    download: ReturnType<typeof vi.fn>;
+  };
 }
 
 /** Build a fresh {@link FakeRedmineClient}; every method resolves `undefined`. */
 export function fakeRedmineClient(): FakeRedmineClient {
   return {
-    issues: { list: vi.fn(), get: vi.fn(), create: vi.fn(), update: vi.fn() },
+    issues: {
+      list: vi.fn(),
+      get: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      addWatcher: vi.fn(),
+      removeWatcher: vi.fn(),
+    },
+    issueRelations: { listForIssue: vi.fn(), get: vi.fn(), create: vi.fn(), delete: vi.fn() },
     projects: { list: vi.fn(), get: vi.fn() },
     timeEntries: { list: vi.fn(), create: vi.fn() },
-    users: { getCurrent: vi.fn() },
+    users: { getCurrent: vi.fn(), list: vi.fn() },
     search: { search: vi.fn() },
+    referenceData: { list: vi.fn() },
+    attachments: { upload: vi.fn(), get: vi.fn(), download: vi.fn() },
   };
 }
 
@@ -50,9 +79,17 @@ export function silentLogger(): Logger {
   return logger;
 }
 
-/** Wrap a fake client into a {@link ToolContext} with a silent logger. */
-export function toolContext(redmine: RedmineClient): ToolContext {
-  return { redmine, logger: silentLogger() };
+/**
+ * Wrap a fake client into a {@link ToolContext} with a silent logger.
+ *
+ * `allowedDirectories` defaults to empty — the production fail-closed default —
+ * so a handler that touches the filesystem must be handed roots explicitly.
+ */
+export function toolContext(
+  redmine: RedmineClient,
+  allowedDirectories: readonly string[] = [],
+): ToolContext {
+  return { redmine, logger: silentLogger(), allowedDirectories };
 }
 
 /** An empty paginated page, useful as a default list return. */

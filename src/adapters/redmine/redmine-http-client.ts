@@ -1,7 +1,7 @@
 /**
  * Redmine HTTP client assembly.
  *
- * Composes the five resource clients over a single credential-bound
+ * Composes the resource clients over a single credential-bound
  * {@link HttpRequester} into the `RedmineClient` port. The HTTP → domain error
  * mapper is adapted here from its total, returning form ({@link mapHttpError})
  * to the throwing `HttpErrorMapper` the requester expects.
@@ -15,10 +15,13 @@
 import { createHttpRequester } from './http-requester.js';
 import { mapHttpError } from './error-mapper.js';
 import { createIssuesResource } from './resources/issues.js';
+import { createIssueRelationsResource } from './resources/issue-relations.js';
 import { createProjectsResource } from './resources/projects.js';
 import { createTimeEntriesResource } from './resources/time-entries.js';
 import { createUsersResource } from './resources/users.js';
 import { createSearchResource } from './resources/search.js';
+import { createReferenceDataResource } from './resources/reference-data.js';
+import { createAttachmentsResource } from './resources/attachments.js';
 import type { Logger, RedmineClient, RedmineCredentials } from '../../domain/ports/index.js';
 
 /** Everything needed to build one credential-bound {@link RedmineClient}. */
@@ -34,8 +37,8 @@ export interface RedmineHttpClientOptions {
 }
 
 /**
- * Build a `RedmineClient` bound to the given credentials: one requester, five
- * resources, nothing more than the port surface.
+ * Build a `RedmineClient` bound to the given credentials: one requester, one
+ * resource client per port group, nothing more than the port surface.
  */
 export function createRedmineHttpClient(options: RedmineHttpClientOptions): RedmineClient {
   const http = createHttpRequester({
@@ -51,10 +54,13 @@ export function createRedmineHttpClient(options: RedmineHttpClientOptions): Redm
 
   return {
     issues: createIssuesResource(http),
+    issueRelations: createIssueRelationsResource(http),
     projects: createProjectsResource(http),
     timeEntries: createTimeEntriesResource(http),
     users: createUsersResource(http),
     search: createSearchResource(http),
+    referenceData: createReferenceDataResource(http),
+    attachments: createAttachmentsResource(http),
   };
 }
 
