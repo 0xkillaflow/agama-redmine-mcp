@@ -65,6 +65,14 @@ jobs:
           path: coverage
           if-no-files-found: warn
 
+      - name: Upload coverage to Codecov
+        if: matrix.node == 22
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
   # Release-readiness: the packed tarball ships dist + docs and nothing extraneous (task 34).
   package:
     name: package (npm pack)
