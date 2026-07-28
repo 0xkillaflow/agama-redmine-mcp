@@ -6,7 +6,7 @@
 [![GitHub Issues](https://img.shields.io/github/issues/0xkillaflow/agama-redmine-mcp.svg)](https://github.com/0xkillaflow/agama-redmine-mcp/issues)
 [![CI](https://github.com/0xkillaflow/agama-redmine-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/0xkillaflow/agama-redmine-mcp/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/0xkillaflow/agama-redmine-mcp/branch/master/graph/badge.svg)](https://codecov.io/gh/0xkillaflow/agama-redmine-mcp)
-[![npm downloads](https://img.shields.io/npm/dm/@0xkillaflow/agama-redmine-mcp.svg)](https://www.npmjs.com/package/@0xkillaflow/agama-redmine-mcp)
+[![npm downloads](https://img.shields.io/npm/dt/@0xkillaflow/agama-redmine-mcp.svg)](https://www.npmjs.com/package/@0xkillaflow/agama-redmine-mcp)
 
 [MCP server](https://modelcontextprotocol.io/) for Redmine. Enables AI agents to work with issues using simple natural language commands.
 
