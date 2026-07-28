@@ -416,6 +416,7 @@ components:
           type: string
         description:
           type: string
+          nullable: true
         datetime:
           type: string
           format: date-time

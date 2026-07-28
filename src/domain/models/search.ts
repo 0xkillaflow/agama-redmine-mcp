@@ -7,13 +7,17 @@ import { z } from 'zod';
  * Conventions are documented in {@link ./common.ts}.
  */
 
-/** A single search hit (`search`). `type` names the matched entity (issue, wiki-page, …). */
+/**
+ * A single search hit (`search`). `type` names the matched entity (issue, wiki-page, …).
+ * `description` is `null` when the matched object has no descriptive text (e.g. an
+ * issue created without a `description`) — confirmed against a live Redmine 6.1.3.
+ */
 export const SearchResultSchema = z.object({
   id: z.number(),
   title: z.string(),
   type: z.string(),
   url: z.string(),
-  description: z.string(),
+  description: z.string().nullable(),
   datetime: z.string(),
 });
 export type SearchResult = z.infer<typeof SearchResultSchema>;
