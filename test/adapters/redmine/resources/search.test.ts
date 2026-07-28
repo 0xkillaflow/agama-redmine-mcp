@@ -26,9 +26,7 @@ describe('createSearchResource', () => {
 
   it('accepts a null description (Redmine returns null for a hit with no descriptive text)', async () => {
     const { http, get } = mockHttp();
-    get.mockResolvedValue(
-      listEnvelope('results', [{ ...searchResultFixture, description: null }]),
-    );
+    get.mockResolvedValue(listEnvelope('results', [{ ...searchResultFixture, description: null }]));
     const search = createSearchResource(http);
 
     const page = await search.search({ q: 'login' });
