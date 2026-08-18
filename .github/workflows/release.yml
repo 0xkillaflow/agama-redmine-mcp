@@ -39,7 +39,7 @@ jobs:
       # When changesets exist, opens/updates a "Version Packages" PR.
       # When that PR is merged (versions bumped, no changesets left), publishes to npm.
       - name: Create release PR or publish
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           version: npm run version
           publish: npm run release
